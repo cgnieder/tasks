@@ -1,0 +1,639 @@
+% --------------------------------------------------------------------------
+% the TASKS package
+% 
+%   Horizontal columned lists.
+% 
+% --------------------------------------------------------------------------
+% Clemens Niederberger
+% Web:    https://bitbucket.org/cgnieder/exsheets/
+% E-Mail: contact@mychemistry.eu
+% --------------------------------------------------------------------------
+% Copyright 2011-2014 Clemens Niederberger
+% 
+% This work may be distributed and/or modified under the
+% conditions of the LaTeX Project Public License, either version 1.3
+% of this license or (at your option) any later version.
+% The latest version of this license is in
+%   http://www.latex-project.org/lppl.txt
+% and version 1.3 or later is part of all distributions of LaTeX
+% version 2005/12/01 or later.
+% 
+% This work has the LPPL maintenance status `maintained'.
+% 
+% The Current Maintainer of this work is Clemens Niederberger.
+% --------------------------------------------------------------------------
+% The tasks package consists of the files
+%  - tasks.sty, tasks.cfg
+% --------------------------------------------------------------------------
+% If you have any ideas, questions, suggestions or bugs to report, please
+% feel free to contact me.
+% --------------------------------------------------------------------------
+\def\@tasks@date{2014/07/02}
+\def\@tasks@version{0.9d}
+
+\RequirePackage { expl3 , xparse , l3keys2e }
+\ProvidesExplPackage
+  {tasks}
+  {\@tasks@date}
+  {\@tasks@version}
+  {Horizontal columned lists.}
+
+% --------------------------------------------------------------------------
+% check expl3 version:
+\@ifpackagelater { expl3 } { 2012/11/21 }
+  { }
+  {
+    \PackageError { tasks } { Support~package~expl3~too~old }
+      {
+        You~need~to~update~your~installation~of~the~bundles~'l3kernel'~and~
+        'l3packages'.\MessageBreak
+        Loading~tasks~will~abort!
+      }
+    \tex_endinput:D
+  }
+
+% --------------------------------------------------------------------------
+% requirements:
+\RequirePackage { epic , cntformats , xtemplate , environ }
+
+% --------------------------------------------------------------------------
+% variables:
+\seq_new:N    \l__tasks_seq
+
+\int_new:N    \l__tasks_depth_int
+\int_new:N    \g__tasks_int
+\int_new:N    \g__tasks_total_items_int
+\int_new:N    \l__tasks_columns_int
+\int_new:N    \l__tasks_rows_int
+\int_new:N    \g__tasks_current_col_num_int
+\int_new:N    \g__tasks_current_row_num_int
+
+\bool_new:N   \l__tasks_enumerate_bool
+\bool_new:N   \l__tasks_resume_bool
+\bool_new:N   \l__tasks_load_tasks_bool
+\bool_new:N   \l__tasks_label_width_bool
+\bool_new:N   \l__tasks_item_indent_bool
+\bool_new:N   \l__tasks_label_offset_bool
+\bool_new:N   \l__tasks_custom_label_bool
+\bool_new:N   \l__tasks_custom_after_item_skip_bool
+\bool_new:N   \l__tasks_debug_bool
+
+\tl_new:N     \l__tasks_instance_tl
+\tl_new:N     \l__tasks_label_tl
+\tl_new:N     \l__tasks_custom_label_tl
+\tl_new:N     \l__tasks_label_pattern_tl
+\tl_new:N     \l__tasks_custom_label_pattern_tl
+\tl_new:N     \l__tasks_label_format_tl
+\tl_new:N     \l__tasks_custom_label_format_tl
+\tl_new:N     \l__tasks_item_fill_left_tl
+\tl_new:N     \l__tasks_item_fill_right_tl
+\tl_new:N     \l__tasks_label_align_tl
+% \tl_new:N     \task
+\tl_new:N     \l__tasks_item_tl
+\tl_new:N     \l__tasks_tmp_label_tl
+
+\dim_new:N    \l__tasks_item_indent_dim
+\dim_new:N    \l__tasks_item_default_indent_dim
+\dim_new:N    \l__tasks_item_width_dim
+\dim_new:N    \l__tasks_label_width_dim
+\dim_new:N    \l__tasks_label_default_width_dim
+\dim_new:N    \l__tasks_label_offset_dim
+\dim_new:N    \l__tasks_label_default_offset_dim
+\dim_new:N    \l__tasks_column_sep_dim
+
+\skip_new:N   \l__tasks_after_item_skip
+\skip_new:N   \l__tasks_custom_after_item_skip
+\skip_new:N   \l__tasks_before_list_skip
+\skip_new:N   \l__tasks_after_list_skip
+
+\coffin_new:N \l__tasks_item_coffin
+\coffin_new:N \l__tasks_label_coffin
+
+\NewCounterPattern* [ tasks ] { task } { tsk }
+\ReadCounterFrom [ tasks ] { task } \g__tasks_int
+
+% temporary variables:
+\tl_new:N     \l__tasks_tmpa_tl
+\coffin_new:N \l__tasks_tmpa_coffin
+
+\cs_new:Npn \__tasks_debug:n #1
+  {
+    \bool_if:NTF \l__tasks_debug_bool
+      { \fbox {#1} }
+      { \use:n {#1} }
+  }
+
+% --------------------------------------------------------------------------
+% collect the tasks:
+\cs_new_protected:Npn \__tasks_collect_tasks:nw #1#2 \end #3
+  {
+    \tl_put_right:Nn \l__tasks_body_tl { #1 }
+    \end { #3 }
+    \tl_if_eq:nnF { #1 } { #3 }
+      { \__tasks_collect_tasks:nw { #1 } }
+  }
+
+%  #1: instance
+%  #2: number of columns
+%  #3: item separator
+%  #4: environment body
+\cs_new_protected:Npn \__tasks:nnnn #1#2#3#4
+  {
+    \bool_if:NT \l__tasks_debug_bool { \dim_set:Nn \fboxsep {0pt} }
+    \seq_set_split:Nnn \l__tasks_seq { #3 } { #4 }
+    % remove the first (empty) item:
+    \seq_pop_left:NN \l__tasks_seq \l__tasks_tmpa_tl
+    \tl_if_blank:VF \l__tasks_tmpa_tl
+      { \tl_show:N \l__tasks_tmpa_tl \@noitemerr }
+    \int_gset:Nn \g__tasks_total_items_int
+      { \seq_count:N \l__tasks_seq }
+    \UseInstance { tasks } { #1 }
+      { \g__tasks_total_items_int }
+      { #2 }
+      { \l__tasks_custom_label_pattern_tl }
+    % just to be sure:
+    \seq_clear:N \l__tasks_seq
+  }
+\cs_generate_variant:Nn \__tasks:nnnn { VnnV }
+
+\cs_new_protected:Npn \__tasks_task:nnw #1#2[#3,#4][#5,#6](#7,#8)
+  {
+    % set the width of an item depending on the number of columns
+    \dim_set:Nn \l__tasks_item_width_dim
+      {
+        (
+          \linewidth
+          - \l__tasks_columns_int \l__tasks_column_sep_dim
+          + \l__tasks_column_sep_dim
+        ) / \l__tasks_columns_int -
+        \l__tasks_depth_int \l__tasks_item_indent_dim
+        %  - \l__tasks_label_width_dim
+        %  - \l__tasks_label_offset_dim
+        \bool_if:NT \l__tasks_debug_bool { -2\fboxrule }
+      }
+    \int_gincr:N \g__tasks_current_col_num_int
+    \__tasks_gset_rows_num:NN
+      \g__tasks_total_items_int
+      \l__tasks_columns_int
+    % set \g__tasks_current_col_num_int to 1 if at the start of a row,
+    % the also step \g__tasks_current_row_num_int :
+    \int_compare:nT { \g__tasks_current_col_num_int > \l__tasks_columns_int }
+      {
+        \int_gset:Nn \g__tasks_current_col_num_int { 1 }
+        \int_incr:N \g__tasks_current_row_num_int
+      }
+    % set the item box:
+    \hcoffin_set:Nn \l__tasks_item_coffin
+      {
+        \vcoffin_set:Nnn \l__tasks_tmpa_coffin
+          { \l__tasks_item_width_dim }
+          { \__tasks_setup: #2 }
+        \__tasks_debug:n
+          {
+            \coffin_typeset:Nnnnn \l__tasks_tmpa_coffin
+              { l } { T } { 0pt } { 0pt }
+          }
+      }
+    % set the label box:
+    \hcoffin_set:Nn \l__tasks_label_coffin
+      {
+        \vcoffin_set:Nnn \l__tasks_tmpa_coffin
+          {
+            \l__tasks_label_width_dim
+            \bool_if:NT \l__tasks_debug_bool {-2\fboxrule }
+          }
+          {
+            \noindent
+            \tl_use:N \l__tasks_item_fill_left_tl
+            \strut #1
+            \tl_use:N \l__tasks_item_fill_right_tl
+          }
+        \__tasks_debug:n
+          {
+            \coffin_typeset:Nnnnn \l__tasks_tmpa_coffin
+              { l } { T } { 0pt } { 0pt }
+          }
+      }
+    % attach the label box at the left of the item box, shifted by
+    % \l__tasks_label_offset_dim :
+    \coffin_attach:NnnNnnnn
+      \l__tasks_item_coffin { l } { T }
+      \l__tasks_label_coffin { r } { T }
+      { - \l__tasks_label_offset_dim
+        % - \l__tasks_label_width_dim - \l__tasks_label_offset_dim
+      } { 0pt }
+    % when a new row starts enter vertical mode:
+    \int_compare:nT { \g__tasks_current_col_num_int = 1 }
+      { \skip_vertical:N \c_zero_skip }
+    % skip horizontally by \l__tasks_item_indent_dim
+    \noindent
+    \skip_horizontal:N \l__tasks_item_indent_dim
+    % typeset the item (with the attached label protruding to the left):
+    \coffin_typeset:Nnnnn \l__tasks_item_coffin
+      { l } { T } { 0pt } { 0pt }
+    % are we between items in a row? The skip by \l__tasks_column_sep_dim :
+    \int_compare:nT
+      { \g__tasks_current_col_num_int < \l__tasks_columns_int }
+      { \skip_horizontal:N \l__tasks_column_sep_dim }
+    % if we ended a row and a new row is still to come skip vertically by
+    % \l__tasks_after_item_skip :
+    \bool_if:nT
+      {
+        ( \int_compare_p:n { \g__tasks_current_col_num_int = \l__tasks_columns_int } )
+        &&
+        ( \int_compare_p:n { \g__tasks_current_row_num_int != \l__tasks_rows_int } )
+      }
+      { \skip_vertical:N \l__tasks_after_item_skip }
+    % clear coffins:
+    \coffin_clear:N \l__tasks_item_coffin
+    \coffin_clear:N \l__tasks_label_coffin
+    \coffin_clear:N \l__tasks_tmpa_coffin
+  }
+\cs_generate_variant:Nn \__tasks_task:nnw { VV }
+
+\cs_new_protected:Npn \__tasks_setup:
+  {
+    \dim_set:Nn \parskip { 0pt }
+    \skip_set:Nn \parfillskip { 0pt plus 1fil }
+    \dim_set_eq:NN \parskip \parsep
+    \dim_set_eq:NN \parindent \listparindent
+    \noindent
+    \strut
+  }
+
+\cs_new_protected:Npn \__tasks_gset_rows_num:NN #1#2
+  {
+    \int_gset:Nn \l__tasks_rows_int { \int_div_truncate:nn { #1 } { #2 } }
+    \int_compare:nNnT { \int_mod:nn { #1 } { #2 } } > { 0 }
+      { \int_gincr:N \l__tasks_rows_int }
+  }
+
+\cs_new_protected:Npn \__tasks_label_align:n #1
+  {
+    \clist_if_in:nnTF { left , center , right } { #1 }
+      {
+        \tl_if_eq:nnT { #1 } { left }
+          {
+            \tl_clear:N   \l__tasks_item_fill_left_tl
+            \tl_set_eq:NN \l__tasks_item_fill_right_tl \hfill
+          }
+        \tl_if_eq:nnT { #1 } { right }
+          {
+            \tl_set_eq:NN \l__tasks_item_fill_left_tl \hfill
+            \tl_clear:N   \l__tasks_item_fill_right_tl
+          }
+        \tl_if_eq:nnT { #1 } { center }
+          {
+            \tl_set_eq:NN \l__tasks_item_fill_left_tl  \hfill
+            \tl_set_eq:NN \l__tasks_item_fill_right_tl \hfill
+          }
+      }
+      {
+        \tl_clear:N   \l__tasks_item_fill_left_tl
+        \tl_set_eq:NN \l__tasks_item_fill_right_tl \hfill
+      }
+  }
+\cs_generate_variant:Nn \__tasks_label_align:n { V }
+\__tasks_label_align:n { left }
+
+% --------------------------------------------------------------------------
+% the `tasks' object:
+%   #1: number of items
+%   #2: number of columns
+%   #3: label-format
+\DeclareObjectType { tasks } { 3 }
+% the `default' template interface:
+\DeclareTemplateInterface { tasks } { default } { 3 }
+  {
+    enumerate       : boolean   = true    ,
+    label           : tokenlist           ,
+    indent          : length    = 2.5em   ,
+    counter-format  : tokenlist = tsk[a]) ,
+    label-format    : tokenlist ,
+    label-width     : length    = 1em     ,
+    label-offset    : length    = .3333em ,
+    after-item-skip : skip      = 1ex plus 1ex minus 1ex
+  }
+
+% in the next three commands we want a really unlikely to occurr marker; for
+% this we use $ with unusual catcode in ``$tasks$default$label$'':
+\char_set_catcode_alignment:N \$
+
+% the `default' template code:
+\DeclareTemplateCode { tasks } { default } { 3 }
+  {
+    enumerate       = \l__tasks_enumerate_bool           ,
+    label           = \l__tasks_label_tl                 ,
+    indent          = \l__tasks_item_default_indent_dim  ,
+    counter-format  = \l__tasks_label_pattern_tl         ,
+    label-format    = \l__tasks_label_format_tl          ,
+    label-width     = \l__tasks_label_default_width_dim  ,
+    label-offset    = \l__tasks_label_default_offset_dim ,
+    after-item-skip = \l__tasks_after_item_skip
+  }
+  {
+    \AssignTemplateKeys
+    \bool_if:NF \l__tasks_label_width_bool
+      {
+        \dim_set_eq:NN
+          \l__tasks_label_width_dim
+          \l__tasks_label_default_width_dim
+      }
+    \bool_if:NF \l__tasks_item_indent_bool
+      {
+        \dim_set_eq:NN
+          \l__tasks_item_indent_dim
+          \l__tasks_item_default_indent_dim
+      }
+    \bool_if:NF \l__tasks_label_offset_bool
+      {
+        \dim_set_eq:NN
+          \l__tasks_label_offset_dim
+          \l__tasks_label_default_offset_dim
+      }
+    \bool_if:NT \l__tasks_custom_after_item_skip_bool
+      {
+        \skip_set_eq:NN
+          \l__tasks_after_item_skip
+          \l__tasks_custom_after_item_skip
+      }
+    \bool_if:NT \l__tasks_custom_label_bool
+      {
+        \tl_set_eq:NN
+          \l__tasks_label_tl
+          \l__tasks_custom_label_tl
+        \bool_set_false:N \l__tasks_enumerate_bool
+      }
+    \__tasks_label_align:V \l__tasks_label_align_tl
+    % need this for enumerate list:
+    \bool_if:nT { !\l__tasks_resume_bool && \l__tasks_enumerate_bool }
+      { \int_gzero:N \g__tasks_int }
+    \int_set:Nn \l__tasks_columns_int { #2 }
+    % set all the items in their own coffins and join with the ground:
+    \int_gzero:N \g__tasks_current_col_num_int
+    \int_set:Nn \g__tasks_current_row_num_int { 1 }
+    \tl_if_blank:VF \l__tasks_custom_label_pattern_tl
+      {
+        \tl_set_eq:NN
+          \l__tasks_label_pattern_tl
+          \l__tasks_custom_label_pattern_tl
+      }
+    \tl_if_blank:VF \l__tasks_custom_label_format_tl
+      {
+        \tl_set_eq:NN
+          \l__tasks_label_format_tl
+          \l__tasks_custom_label_format_tl
+      }
+    \seq_map_inline:Nn \l__tasks_seq
+      {
+        \__tasks_read_item:w ##1 \q_stop
+        \bool_if:NTF \l__tasks_enumerate_bool
+          {
+            \tl_if_eq:VnT \l__tasks_tmp_label_tl { $tasks$default$label$ }
+              {
+                \int_gincr:N \g__tasks_int
+                \SaveCounterPatternFrom [ tasks ]
+                  \l__tasks_tmpa_tl
+                  \l__tasks_label_tl
+                  \l__tasks_label_pattern_tl
+                \cs_gset:Npx \@currentlabel { \l__tasks_label_tl }
+              }
+          }
+          {
+            \tl_if_blank:VT \l__tasks_label_tl
+              { \tl_set_eq:NN \l__tasks_label_tl \labelitemi }
+          }
+        \tl_put_left:NV \l__tasks_label_tl \l__tasks_label_format_tl
+        \tl_if_eq:VnTF \l__tasks_tmp_label_tl { $tasks$default$label$ }
+          {
+            \__tasks_task:VVw
+              \l__tasks_label_tl
+              \l__tasks_item_tl
+              [ l , b ] [ l , t ] ( 0pt , 0pt )
+          }
+          {
+            \__tasks_task:VVw
+              \l__tasks_tmp_label_tl
+              \l__tasks_item_tl
+              [ l , b ] [ l , t ] ( 0pt , 0pt )
+            \tl_clear:N \l__tasks_tmp_label_tl
+          }
+      }
+  }
+\cs_generate_variant:Nn \tl_if_eq:nnTF { V }
+\cs_generate_variant:Nn \tl_if_eq:nnT { V }
+
+\cs_new:Npn \__tasks_read_item:w
+  {
+    \peek_meaning:NTF [
+      { \__tasks_read_item_aux:w }
+      { \__tasks_read_item_aux:w[$tasks$default$label$] }
+  }
+
+\cs_new_protected:Npn \__tasks_read_item_aux:w [#1]#2 \q_stop
+  {
+    \tl_set:Nn \l__tasks_tmp_label_tl { #1 }
+    \tl_if_eq:nnF { #1 } { $tasks$default$label$ }
+      { \tl_put_left:NV \l__tasks_tmp_label_tl \l__tasks_label_format_tl }
+    \tl_set:Nn \l__tasks_item_tl { \ignorespaces #2 }
+  }
+
+\char_set_catcode_math_toggle:N \$
+
+% --------------------------------------------------------------------------
+% choice box:
+\bool_new:N \l__tasks_choice_checked_bool
+\dim_new:N  \l__tasks_choice_width_dim
+\dim_set:Nn \l__tasks_choice_width_dim { 1.25ex }
+\dim_new:N  \l__tasks_choice_linewidth_dim
+\dim_set:Nn \l__tasks_choice_linewidth_dim { .3pt }
+\dim_new:N  \l__tasks_choice_checkwidth_dim
+\dim_set:Nn \l__tasks_choice_checkwidth_dim { .5pt }
+\dim_new:N  \l__tasks_choice_raise_dim
+\dim_set:Nn \l__tasks_choice_raise_dim { .1ex }
+
+\cs_new_protected:Npn \tasks_choice:
+  {
+    \leavevmode
+    \group_begin:
+      \bool_set_false:N \l__tasks_choice_checked_bool
+      \box_move_up:nn
+        { \l__tasks_choice_raise_dim }
+        { \hbox:n { \__tasks_choice: } }
+    \group_end:
+  }
+
+\cs_new_protected:Npn \tasks_choice_checked:
+  {
+    \leavevmode
+    \group_begin:
+      \bool_set_true:N \l__tasks_choice_checked_bool
+      \box_move_up:nn
+        { \l__tasks_choice_raise_dim }
+        { \hbox:n { \__tasks_choice: } }
+    \group_end:
+  }
+
+\cs_new_protected:Npn \__tasks_choice:
+  {%
+    \dim_set:Nn \unitlength { .1\l__tasks_choice_width_dim }
+    \begin{picture}(10,0)
+      \linethickness \l__tasks_choice_linewidth_dim
+      \drawline(0,0)(0,10)(10,10)(10,0)(0,0)
+      \linethickness \l__tasks_choice_checkwidth_dim
+      \bool_if:NT \l__tasks_choice_checked_bool
+        {
+          \drawline(2,2)(8,8)
+          \drawline(2,8)(8,2)
+        }
+    \end{picture}%
+  }
+
+\providecommand* \choicebox { \tasks_choice: }
+\providecommand* \checkedchoicebox { \tasks_choice_checked: }
+
+% --------------------------------------------------------------------------
+% base instance:
+% ALPHABETIZE: a) b) c)
+\DeclareInstance { tasks } { alphabetize } { default } { }
+
+\keys_define:nn { tasks / list }
+  {
+    debug           .bool_set:N = \l__tasks_debug_bool ,
+    style           .tl_set:N   = \l__tasks_instance_tl ,
+    counter-format  .tl_set:N   = \l__tasks_custom_label_pattern_tl ,
+    label           .code:n     =
+      \bool_set_true:N \l__tasks_custom_label_bool
+      \tl_set:Nn \l__tasks_custom_label_tl { #1 } ,
+    label-format    .tl_set:N   = \l__tasks_custom_label_format_tl ,
+    label-width     .code:n     =
+      \dim_set:Nn \l__tasks_label_width_dim { #1 }
+      \bool_set_true:N \l__tasks_label_width_bool ,
+    label-offset    .code:n     =
+      \dim_set:Nn \l__tasks_label_offset_dim { #1 }
+      \bool_set_true:N \l__tasks_label_offset_bool ,
+    label-align     .tl_set:N   = \l__tasks_label_align_tl ,
+    item-indent     .code:n     =
+      \dim_set:Nn \l__tasks_item_indent_dim { #1 }
+      \bool_set_true:N \l__tasks_item_indent_bool ,
+    columns-sep     .dim_set:N  = \l__tasks_column_sep_dim ,
+    before-skip     .skip_set:N = \l__tasks_before_list_skip ,
+    after-skip      .skip_set:N = \l__tasks_after_list_skip ,
+    after-item-skip .code:n     =
+      \bool_set_true:N \l__tasks_custom_after_item_skip_bool
+      \skip_set:Nn \l__tasks_custom_after_item_skip { #1 } ,
+    resume          .bool_set:N = \l__tasks_resume_bool
+  }
+
+% --------------------------------------------------------------------------
+% the generic environment:
+\NewEnviron { __tasks_env: } [ 3 ]
+  {
+    \keys_set:nn { tasks / list } { #2 }
+    \tl_if_blank:VT \l__tasks_instance_tl
+      { \keys_set:nn { tasks / list } { style = alphabetize } }
+    \skip_vertical:N \l__tasks_before_list_skip
+    \skip_vertical:N \c_zero_skip
+    \list {}
+      {
+        \dim_set:Nn \leftmargin { 0pt }
+        \dim_set:Nn \rightmargin { 0pt }
+      }
+    \item \scan_stop:
+    \int_incr:N \l__tasks_depth_int
+    \__tasks:VnnV \l__tasks_instance_tl { #3 } { #1 } \BODY
+    \endlist
+    \skip_vertical:N \l__tasks_after_list_skip
+  }
+
+% --------------------------------------------------------------------------
+% command to start a new row:
+\cs_new_protected:Npn \tasks_new_row:
+  {
+    \int_gset:Nn \g__tasks_total_items_int
+      { \g__tasks_total_items_int + \l__tasks_columns_int - \g__tasks_current_col_num_int }
+    \__tasks_gset_rows_num:NN
+      \g__tasks_total_items_int
+      \l__tasks_columns_int
+    \int_gset_eq:NN \g__tasks_current_col_num_int \l__tasks_columns_int
+  }
+
+\NewDocumentCommand \startnewitemline {}
+  { \tasks_new_row: }
+
+% --------------------------------------------------------------------------
+% the user environment:
+\NewDocumentCommand \NewTasks { O{}mO{\task}D(){1} }
+  {
+    \NewDocumentEnvironment { #2 } { O{}D(){#4} }
+      { \__tasks_env: { #3 } { #1,##1 } { ##2 } }
+      { \end__tasks_env: }
+  }
+
+\NewDocumentCommand \RenewTasks { O{}mO{\task}D(){1} }
+  {
+    \RenewDocumentEnvironment { #2 } { O{}D(){#4} }
+      { \__tasks_env: { #3 } { #1,##1 } { ##2 } }
+      { \end__tasks_env: }
+  }
+
+% --------------------------------------------------------------------------
+% default list:
+\NewTasks { tasks }
+
+% --------------------------------------------------------------------------
+% package options:
+\keys_define:nn { tasks / options }
+  {
+    more .bool_set:N = \l__tasks_load_tasks_bool
+  }
+
+\ProcessKeysOptions { tasks / options }
+
+\bool_if:NT \l__tasks_load_tasks_bool
+  {
+    \cs_if_exist:NF \tasks_config_file_loaded:
+      { \input { tasks.cfg } }
+  }
+
+% --------------------------------------------------------------------------
+% setup:
+\cs_new_protected:Npn \tasks_setup:n #1
+  { \keys_set:nn { tasks / list } { #1 } }
+
+\NewDocumentCommand \settasks { m }
+  { \tasks_setup:n { #1 } }
+
+% --------------------------------------------------------------------------
+\tex_endinput:D
+
+% HISTORY:
+2013/01/19 v0.7  - extracted from `exsheets' package; this also lead to a
+                   slightly new syntax and a few new options for it
+2013/04/04 v0.8a - corrected \seq_length:N => \seq_count:N
+2013/04/07 v0.9  - protected internal commands where appropriate
+                 - made enumerated item referenceable with \label{}
+                   and \ref{}; this introduced new options:
+                    * the former `label-format' is now `counter-format'
+                    * new: `label-format'
+                 - changed defaults for `label-width' and `label-offset'
+                 - ensure that the `after-item-skip' is only
+                         inserted in between rows
+                 - new option `after-item-skip'
+                 - improvements when label are set with optional argument:
+                    * a provided but empty argument is now correctly recognized
+                    * the counter is  _not_ stepped anymore for enumerated
+                      lists when the optional argument is provided
+                 - new command \startnewitemline that forces the next item to
+                   be put at the beginning of a row
+2013/04/22 v0.9a - new option `item-indent'
+                 - synchronized version number with `exsheets' until now but
+                   won't any more
+2013/12/03 v0.9b - add missing \noindent for the case when \listparindent is
+                   non-zero, fixes http://tex.stackexchange.com/q/148082/5049
+2014/05/11 v0.9c - remove definition of the \task macro: it is not necessary
+                   for `tasks' to function but it conflicts e.g. with `ltxdoc'
+                   class
+2014/07/02 v0.9d - new option `debug'
+                 - new option `column-sep
+                 - renamed a few internal variables
