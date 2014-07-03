@@ -5,10 +5,10 @@
 % 
 % --------------------------------------------------------------------------
 % Clemens Niederberger
-% Web:    https://bitbucket.org/cgnieder/exsheets/
+% Web:    https://github.com/cgnieder/tasks/
 % E-Mail: contact@mychemistry.eu
 % --------------------------------------------------------------------------
-% Copyright 2011-2014 Clemens Niederberger
+% Copyright 2013-2014 Clemens Niederberger
 % 
 % This work may be distributed and/or modified under the
 % conditions of the LaTeX Project Public License, either version 1.3
@@ -22,14 +22,11 @@
 % 
 % The Current Maintainer of this work is Clemens Niederberger.
 % --------------------------------------------------------------------------
-% The tasks package consists of the files
-%  - tasks.sty, tasks.cfg
-% --------------------------------------------------------------------------
 % If you have any ideas, questions, suggestions or bugs to report, please
 % feel free to contact me.
 % --------------------------------------------------------------------------
-\def\@tasks@date{2014/07/02}
-\def\@tasks@version{0.9d}
+\def\@tasks@date{2014/07/03}
+\def\@tasks@version{0.10}
 
 \RequirePackage { expl3 , xparse , l3keys2e }
 \ProvidesExplPackage
@@ -40,7 +37,7 @@
 
 % --------------------------------------------------------------------------
 % check expl3 version:
-\@ifpackagelater { expl3 } { 2012/11/21 }
+\@ifpackagelater { expl3 } { 2014/01/01 }
   { }
   {
     \PackageError { tasks } { Support~package~expl3~too~old }
@@ -55,6 +52,12 @@
 % --------------------------------------------------------------------------
 % requirements:
 \RequirePackage { epic , cntformats , xtemplate , environ }
+
+\msg_new:nnn {tasks} {deprecated-option}
+  {
+    The~ option~ `#1'~ has~ been~ removed~ from~ the~ `tasks'~ package.~
+    Please~ see~ the~ documentation~ for~details.
+  }
 
 % --------------------------------------------------------------------------
 % variables:
@@ -125,12 +128,12 @@
 
 % --------------------------------------------------------------------------
 % collect the tasks:
-\cs_new_protected:Npn \__tasks_collect_tasks:nw #1#2 \end #3
+\cs_new_protected:Npn \__tasks_collect_tasks:nww #1#2 \end #3
   {
     \tl_put_right:Nn \l__tasks_body_tl { #1 }
     \end { #3 }
     \tl_if_eq:nnF { #1 } { #3 }
-      { \__tasks_collect_tasks:nw { #1 } }
+      { \__tasks_collect_tasks:nww { #1 } }
   }
 
 %  #1: instance
@@ -156,7 +159,7 @@
   }
 \cs_generate_variant:Nn \__tasks:nnnn { VnnV }
 
-\cs_new_protected:Npn \__tasks_task:nnw #1#2[#3,#4][#5,#6](#7,#8)
+\cs_new_protected:Npn \__tasks_task:nnwwwwww #1#2[#3,#4][#5,#6](#7,#8)
   {
     % set the width of an item depending on the number of columns
     \dim_set:Nn \l__tasks_item_width_dim
@@ -249,7 +252,7 @@
     \coffin_clear:N \l__tasks_label_coffin
     \coffin_clear:N \l__tasks_tmpa_coffin
   }
-\cs_generate_variant:Nn \__tasks_task:nnw { VV }
+\cs_generate_variant:Nn \__tasks_task:nnwwwwww { VV }
 
 \cs_new_protected:Npn \__tasks_setup:
   {
@@ -386,7 +389,7 @@
       }
     \seq_map_inline:Nn \l__tasks_seq
       {
-        \__tasks_read_item:w ##1 \q_stop
+        \__tasks_read_item:ww ##1 \q_stop
         \bool_if:NTF \l__tasks_enumerate_bool
           {
             \tl_if_eq:VnT \l__tasks_tmp_label_tl { $tasks$default$label$ }
@@ -406,13 +409,13 @@
         \tl_put_left:NV \l__tasks_label_tl \l__tasks_label_format_tl
         \tl_if_eq:VnTF \l__tasks_tmp_label_tl { $tasks$default$label$ }
           {
-            \__tasks_task:VVw
+            \__tasks_task:VVwwwwww
               \l__tasks_label_tl
               \l__tasks_item_tl
               [ l , b ] [ l , t ] ( 0pt , 0pt )
           }
           {
-            \__tasks_task:VVw
+            \__tasks_task:VVwwwwww
               \l__tasks_tmp_label_tl
               \l__tasks_item_tl
               [ l , b ] [ l , t ] ( 0pt , 0pt )
@@ -423,14 +426,14 @@
 \cs_generate_variant:Nn \tl_if_eq:nnTF { V }
 \cs_generate_variant:Nn \tl_if_eq:nnT { V }
 
-\cs_new:Npn \__tasks_read_item:w
+\cs_new:Npn \__tasks_read_item:ww
   {
     \peek_meaning:NTF [
-      { \__tasks_read_item_aux:w }
-      { \__tasks_read_item_aux:w[$tasks$default$label$] }
+      { \__tasks_read_item_aux:ww }
+      { \__tasks_read_item_aux:ww [$tasks$default$label$] }
   }
 
-\cs_new_protected:Npn \__tasks_read_item_aux:w [#1]#2 \q_stop
+\cs_new_protected:Npn \__tasks_read_item_aux:ww [#1]#2 \q_stop
   {
     \tl_set:Nn \l__tasks_tmp_label_tl { #1 }
     \tl_if_eq:nnF { #1 } { $tasks$default$label$ }
@@ -585,16 +588,13 @@
 % package options:
 \keys_define:nn { tasks / options }
   {
-    more .bool_set:N = \l__tasks_load_tasks_bool
+    more .code:n = \msg_warning:nnn {tasks} {deprecated-option} {more}
   }
 
 \ProcessKeysOptions { tasks / options }
 
-\bool_if:NT \l__tasks_load_tasks_bool
-  {
-    \cs_if_exist:NF \tasks_config_file_loaded:
-      { \input { tasks.cfg } }
-  }
+\cs_if_exist:NF \tasks_config_file_loaded:
+  { \file_input:n { tasks.cfg } }
 
 % --------------------------------------------------------------------------
 % setup:
@@ -608,32 +608,34 @@
 \tex_endinput:D
 
 % HISTORY:
-2013/01/19 v0.7  - extracted from `exsheets' package; this also lead to a
-                   slightly new syntax and a few new options for it
-2013/04/04 v0.8a - corrected \seq_length:N => \seq_count:N
-2013/04/07 v0.9  - protected internal commands where appropriate
-                 - made enumerated item referenceable with \label{}
-                   and \ref{}; this introduced new options:
-                    * the former `label-format' is now `counter-format'
-                    * new: `label-format'
-                 - changed defaults for `label-width' and `label-offset'
-                 - ensure that the `after-item-skip' is only
-                         inserted in between rows
-                 - new option `after-item-skip'
-                 - improvements when label are set with optional argument:
-                    * a provided but empty argument is now correctly recognized
-                    * the counter is  _not_ stepped anymore for enumerated
-                      lists when the optional argument is provided
-                 - new command \startnewitemline that forces the next item to
-                   be put at the beginning of a row
-2013/04/22 v0.9a - new option `item-indent'
-                 - synchronized version number with `exsheets' until now but
-                   won't any more
-2013/12/03 v0.9b - add missing \noindent for the case when \listparindent is
-                   non-zero, fixes http://tex.stackexchange.com/q/148082/5049
-2014/05/11 v0.9c - remove definition of the \task macro: it is not necessary
-                   for `tasks' to function but it conflicts e.g. with `ltxdoc'
-                   class
-2014/07/02 v0.9d - new option `debug'
-                 - new option `column-sep
-                 - renamed a few internal variables
+2013/01/19 v0.7   - extracted from `exsheets' package; this also lead to a
+                    slightly new syntax and a few new options for it
+2013/04/04 v0.8a  - corrected \seq_length:N => \seq_count:N
+2013/04/07 v0.9   - protected internal commands where appropriate
+                  - made enumerated item referenceable with \label{}
+                    and \ref{}; this introduced new options:
+                     * the former `label-format' is now `counter-format'
+                     * new: `label-format'
+                  - changed defaults for `label-width' and `label-offset'
+                  - ensure that the `after-item-skip' is only
+                          inserted in between rows
+                  - new option `after-item-skip'
+                  - improvements when label are set with optional argument:
+                     * a provided but empty argument is now correctly recognized
+                     * the counter is  _not_ stepped anymore for enumerated
+                       lists when the optional argument is provided
+                  - new command \startnewitemline that forces the next item to
+                    be put at the beginning of a row
+2013/04/22 v0.9a  - new option `item-indent'
+                  - synchronized version number with `exsheets' until now but
+                    won't any more
+2013/12/03 v0.9b  - add missing \noindent for the case when \listparindent is
+                    non-zero, fixes http://tex.stackexchange.com/q/148082/5049
+2014/05/11 v0.9c  - remove definition of the \task macro: it is not necessary
+                    for `tasks' to function but it conflicts e.g. with `ltxdoc'
+                    class
+2014/07/03 v0.10  - new option `debug'
+                  - new option `column-sep
+                  - renamed a few internal variables
+                  - remove package from the `exsheets' bundle and distribute
+                    it as package of its own

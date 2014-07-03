@@ -1,18 +1,14 @@
-% arara: pdflatex
-% arara: biber
-% arara: pdflatex
-% arara: pdflatex
 % --------------------------------------------------------------------------
 % the TASKS package
 % 
-%   horizontal columned lists
+%   Horizontal columned lists.
 % 
 % --------------------------------------------------------------------------
 % Clemens Niederberger
-% Web:    https://bitbucket.org/cgnieder/exsheets/
+% Web:    https://github.com/cgnieder/tasks/
 % E-Mail: contact@mychemistry.eu
 % --------------------------------------------------------------------------
-% Copyright 2011-2014 Clemens Niederberger
+% Copyright 2013-2014 Clemens Niederberger
 % 
 % This work may be distributed and/or modified under the
 % conditions of the LaTeX Project Public License, either version 1.3
@@ -26,24 +22,18 @@
 % 
 % The Current Maintainer of this work is Clemens Niederberger.
 % --------------------------------------------------------------------------
-% The tasks package is part of the exsheets bundle
-% --------------------------------------------------------------------------
 % If you have any ideas, questions, suggestions or bugs to report, please
 % feel free to contact me.
 % --------------------------------------------------------------------------
 \documentclass[load-preamble+]{cnltx-doc}
-\usepackage[more]{tasks}
+\usepackage{tasks}
 
 \setcnltx{
   package  = {tasks} ,
   authors  = Clemens Niederberger ,
   email    = {contact@mychemistry.eu} ,
   url      = {https://bitbucket.org/cgnieder/exsheets/} ,
-  info     = {%
-    {\small part of the \href{exsheets_en.pdf}{\ExSheets}
-      bundle}\\[\baselineskip]
-    create horizontal columned lists%
-  } ,
+  info     = {create horizontal columned lists} ,
   add-cmds = {
     checkedchoicebox ,
     choicebox,
@@ -97,27 +87,31 @@
 \begin{document}
 
 \section{Motivation}
-Originally \Tasks\ has been an integral part of \ExSheets\changedversion{0.7}.
-However, users told me that it indeed could be useful to have it as a
-stand-alone package not having to load the whole \ExSheets\ beast just for
-having the \env{tasks} environment available.  Since I agree with this the
-environment has been extracted into a package if its own, \Tasks.
+Originally \Tasks\ has been an integral part of the
+\ExSheets\changedversion{0.7} package.  However, users told me that it indeed
+could be useful to have it as a stand-alone package not having to load the
+whole \ExSheets\ beast just for having the \env{tasks} environment available.
+Since I agree with this the environment has been extracted into a package if
+its own, \Tasks.  Since then \Tasks{} has been distributed as a package of its
+own but as part of the \ExSheets{} bundle\changedversion{0.10}.  With v0.10 I
+decided to make it a completely independent package.  So the relation to
+\ExSheets{} only is a historical one.
 
 The reason for the \env{tasks} environment is an unwritten agreement in German
-maths textbooks (in (junior) high school, especially) to organize exercises in
-columns counting horizontally rather than vertically.  That is what
-\code{tasks} primarily is for. If you don't need this feature you're better
-off using traditional \LaTeX{} lists and the \pkg{enumitem} package for
+maths textbooks (exspecially in (junior) high school textbooks) to organize
+exercises in columns counting horizontally rather than vertically.  That is
+what \code{tasks} primarily is for. If you don't need this feature you're
+better off using traditional \LaTeX{} lists and the \pkg{enumitem} package for
 customization.
 
 \section{License and Requirements}\label{sec:license}
 \license
 
-\Tasks\ requires the \bnd{l3kernel}~\cite{bnd:l3kernel} bundle
-,\needpackage{xparse}, \pkg{xtemplate} and \needpackage{l3keys2e} which are
+\Tasks\ requires the \bnd{l3kernel}~\cite{bnd:l3kernel} bundle,
+\needpackage{xparse}, \pkg{xtemplate} and \needpackage{l3keys2e} which are
 part of the \bnd{l3packages}~\cite{bnd:l3packages} bundle,
-\pkg{epic}~\cite{pkg:epic}, \pkg{cntformats}\footnote{Part of the \ExSheets\
-  bundle}, and \pkg{environ}~\cite{pkg:environ}.
+\pkg{epic}~\cite{pkg:epic}, \pkg{cntformats}~\cite{pkg:cntformats}, and
+\pkg{environ}~\cite{pkg:environ}.
 
 
 \section{How it works}
@@ -128,11 +122,13 @@ the same.  Here are some of the differences:
   \item A first difference: there is no pagebreak possible inside an item but
     only between items.
   \item A second difference: the enumeration default is a), b), c) \ldots
-  \item A third difference: there is a split at \emph{every} occurrence of the
-    item separator.  For this reason the default separator is not \cs*{item}
-    but \cs{task} so it is unique to this environment only.
-  \item A fourth difference: the \env{tasks} environment cannot be nested.
-    You can, however, use an \env*{itemize} environment or something in it.
+  \item A third difference: the body of the \env{tasks} environment is split
+    at \emph{every} occurrence of the item separator.  For this reason the
+    default separator is not \cs*{item} but \cs{task} so it is unique to this
+    environment only.  This directly leads to\ldots
+  \item \ldots{} a fourth difference: the \env{tasks} environment cannot be
+    nested.  You can, however, use an \env*{itemize} environment or another
+    \enquote{real} list in it.
   \item A fifth difference: verbatim material cannot be used in it.  You'll
     have to use \cs*{string}, \cs*{texttt} or \cs*{detokenize}.  If this
     won't suffice then don't use \env{tasks}.
@@ -195,19 +191,12 @@ following command:
   \end{tasks}
 \end{example}
 
-
-
 \section{Available Options}\label{sec:tasks:options}
-The \Tasks\ package has one package option which also is called when you load
-\ExSheets\ with the \option{load-tasks} option.
-\begin{options}
-  \opt{more}
-    Load additional instances for the \env{tasks} object, details are
-    explained later in section~\ref{sec:tasks:instances}.
-\end{options}
 
-The environment itself has some more options, namely the following ones that
-can be set using a setup command:
+The \Tasks{} package does not have any package options\changedversion{0.10}.
+
+The environment \env{tasks} has a number of options, though, namely the
+following ones that can be set using a setup command:
 \begin{commands}
   \command{settasks}[\marg{options}]
     Setup command for \Tasks.
@@ -243,7 +232,8 @@ can be set using a setup command:
     \keyis{label-align}{left} is set).  Please see figure~\ref{fig:lengths}
     for a sketch of the available lengths and how they are set.
   \keyval{column-sep}{dim}\Default{0pt}
-    A horizontal length that is inserted between columns ot items.
+    \sinceversion{0.10}A horizontal length that is inserted between columns ot
+    items.
   \keychoice{label-align}{left,right,center}\Default{left}
     \sinceversion{0.7}Determines how the labels are aligned within the
     label-box whose width is set with \option{label-width}.
@@ -258,9 +248,9 @@ can be set using a setup command:
     order to use this option properly you shouldn't mix different \env{tasks}
     environments that both count their items.
   \keybool{debug}\Default{false}
-    If set to true \cs*{fboxsep} is set to \code{0pt} inside the \env{tasks}
-    environment and \cs*{fbox} is used to draw a frame around the label boxes
-    and the item boxes.
+    \sinceversion{0.10}If set to true \cs*{fboxsep} is set to \code{0pt}
+    inside the \env{tasks} environment and \cs*{fbox} is used to draw a frame
+    around the label boxes and the item boxes.
 \end{options}
 
 \begin{figure}
