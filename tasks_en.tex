@@ -46,7 +46,7 @@
     choice, correct,
     DeclareInstance, DeclareTemplateInterface,
     leftthumbsup,
-    s, sample
+    sample, Sample
   }
 }
 
@@ -80,9 +80,9 @@
 \newcommand*\correct{\PrintSolutionsTF{\checkedchoicebox}{\choicebox}}
 
 
-\def\s{This is some sample text we will use to create a somewhat
+\newcommand*\sample{This is some sample text we will use to create a somewhat
   longer text spanning a few lines.}
-\def\sample{\s\ \s\par\s}
+\newcommand*\Sample{\sample\ \sample\par\sample}
 
 \begin{document}
 
@@ -142,15 +142,15 @@ the same.  Here are some of the differences:
 \end{environments}
 Let's see an example:
 \begin{example}
-  % \sample is defined to contain some sample text:
-  % \def\s{This is some sample text we will use to create a somewhat
+  % \Sample is defined to contain some sample text:
+  % \def\sample{This is some sample text we will use to create a somewhat
   %   longer text spanning a few lines.}
-  % \def\sample{\s\ \s\par\s}
+  % \def\Sample{\sample\ \sample\par\sample}
   Some text before the list.
   \begin{tasks}
-    \task \sample
-    \task \sample
-    \task \sample
+    \task \Sample
+    \task \Sample
+    \task \Sample
   \end{tasks}
   And also some text after it.
 \end{example}
@@ -159,17 +159,74 @@ The environment takes the optional argument \darg{num of columns} with which
 the number of columns used by the environment is specified.
 \begin{example}
   \begin{tasks}(2)
+    \task \Sample
+    \task \sample\ \sample
     \task \sample
-    \task \s\ \s
-    \task \s
-    \task \sample
-    \task \s\par\s
+    \task \Sample
+    \task \sample\par\sample
   \end{tasks}
 \end{example}
 
-\subsection{Introducing a New Row}
-Sometimes it may come in handy if the current\sinceversion{0.9} row of items
-could be terminated and a new one is started.  This is possible with the
+\subsection{Items Spanning More Than One Column}
+Sometimes it may come in handy if an item is allowed to span more than one
+column.  \Tasks\sinceversion{0.10} supports items using the remaining space by
+adding an optional\label{optional-star} star to \cs{task}:
+\begin{example}
+  \begin{tasks}(3)
+    \task \sample
+    \task* \sample
+    \task* \sample
+    \task \sample
+    \task \sample
+  \end{tasks}
+\end{example}
+
+\Tasks\sinceversion{0.10} also supports items that span \emph{all} columns in
+any case by adding an optional bang\label{optional-bang} to \cs{task}.
+\begin{example}
+  \begin{tasks}(3)
+    \task \sample
+    \task! \sample
+    \task! \sample
+    \task \sample
+    \task \sample
+  \end{tasks}
+\end{example}
+
+The optional star has itself an optional argument with parentheses where you
+can specify the number of columns the item is supposed to span:\label{debug}
+\begin{example}
+  \settasks{debug}
+  \begin{tasks}(4)
+    \task the first
+    \task the second
+    \task the third
+    \task the fourth
+    \task*(3) the fifth item is way too long for this and needs three columns
+    \task the sixth
+    \task the seventh
+    \task*(2) the eighth item is way too long for this and needs two columns
+    \task the nineth
+    \task the tenth
+  \end{tasks}
+\end{example}
+If there are not enough columns left (say two columns but you said
+\cs{task}\sarg\Darg{3}) the argument is ignored and the maximum number of
+remaining columns is used (two in case of our example).
+
+Both optional star and optional bang can be combined with the optional
+argument for a custom label:
+\begin{example}
+  \begin{tasks}(3)
+    \task \sample
+    \task* \sample
+    \task*[(x)] \sample
+    \task \sample
+    \task \sample
+  \end{tasks}
+\end{example}
+
+Forcing a new item line manually is also possible\sinceversion{0.9} using the
 following command:
 \begin{commands}
   \command{startnewitemline}
@@ -190,6 +247,11 @@ following command:
     \task the tenth
   \end{tasks}
 \end{example}
+
+While this works it also needs a bit of care since the wisth of the items
+doesn't change which means in order to use the full width you'd have to use
+trickery like \cs*{rlap} which then means the danger of the item text sticking
+into the margin\ldots
 
 \section{Available Options}\label{sec:tasks:options}
 
@@ -283,19 +345,19 @@ following ones that can be set using a setup command:
 Now the same list as above but with three columns and a different label:
 \begin{example}
   \begin{tasks}[counter-format=(tsk[r]),label-width=4ex](2)
+    \task \Sample
+    \task \sample\ \sample
     \task \sample
-    \task \s\ \s
-    \task \s
-    \task \sample
-    \task \s\par\s
+    \task \Sample
+    \task \sample\par\sample
   \end{tasks}
 \end{example}
 % \begin{tasks}[counter-format=(tsk[r]),label-width=4ex](3)
+%  \task \Sample
+%  \task \sample\ \sample
 %  \task \sample
-%  \task \s\ \s
-%  \task \s
-%  \task \sample
-%  \task \s\par\s
+%  \task \Sample
+%  \task \sample\par\sample
 % \end{tasks}
 
 Let's use it inside a question, \ie, inside \ExSheets' \env{question}
@@ -325,12 +387,13 @@ environment:
   \end{solution}
 \end{example}
 
-Finally let's see what the \option{debug} option does:
+Finally let's see what the \option{debug} option does (you could see it
+already on page~\pageref{debug}):
 \begin{example}
   \settasks{debug}
   \begin{tasks}(2)
-    \task \sample
-    \task \sample
+    \task \Sample
+    \task \Sample
   \end{tasks}
 \end{example}
 
@@ -394,7 +457,7 @@ The separator does not have to be a control sequence:
   \NewTasks[label=\footnotesize\leftthumbsup,label-width=1.3em]{done}[*]
   \begin{done}
     * First task
-    * Second Task
+    * Second task
   \end{done}
 \end{example}
 Although this might seem handy or even nice I strongly advice against using
@@ -403,6 +466,23 @@ split at \emph{every} occurrence of the separator.  So in order to use the
 separator (here for example for a starred variant of a command) within an item
 it has to be hidden in braces.  This is avoided of you use a command sequence
 which even doesn't have to be defined.
+
+Please also keep in mind that the separator still has an optional star
+argument (see~\pageref{optional-star}), an optional bang argument and the
+standard optional argument.  Using \code{*} will prevent the optional star
+argument.
+
+\begin{example}
+  % preamble:
+  % \usepackage{dingbat}
+  \NewTasks[label=\footnotesize\leftthumbsup,label-width=1.3em]{done}[*]
+  \begin{done}(3)
+    * First task
+    * Second task
+    *! Third task spanning the full width available
+    * Fourth task
+  \end{done}
+\end{example}
 
 Let's say you want a \env*{multiplechoice} environment that has three columns
 in its default state.  You could do something like this:

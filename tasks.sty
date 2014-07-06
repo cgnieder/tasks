@@ -25,7 +25,7 @@
 % If you have any ideas, questions, suggestions or bugs to report, please
 % feel free to contact me.
 % --------------------------------------------------------------------------
-\def\@tasks@date{2014/07/03}
+\def\@tasks@date{2014/07/06}
 \def\@tasks@version{0.10}
 
 \RequirePackage { expl3 , xparse , l3keys2e }
@@ -70,6 +70,7 @@
 \int_new:N    \l__tasks_rows_int
 \int_new:N    \g__tasks_current_col_num_int
 \int_new:N    \g__tasks_current_row_num_int
+\int_new:N    \l__tasks_item_columns_int
 
 \bool_new:N   \l__tasks_enumerate_bool
 \bool_new:N   \l__tasks_resume_bool
@@ -80,6 +81,8 @@
 \bool_new:N   \l__tasks_custom_label_bool
 \bool_new:N   \l__tasks_custom_after_item_skip_bool
 \bool_new:N   \l__tasks_debug_bool
+\bool_new:N   \l__tasks_item_full_line_bool
+\bool_new:N   \l__tasks_item_rest_of_line_bool
 
 \tl_new:N     \l__tasks_instance_tl
 \tl_new:N     \l__tasks_label_tl
@@ -116,6 +119,8 @@
 \ReadCounterFrom [ tasks ] { task } \g__tasks_int
 
 % temporary variables:
+\int_new:N    \l__tasks_tmpa_int
+\int_new:N    \l__tasks_tmpb_int
 \tl_new:N     \l__tasks_tmpa_tl
 \coffin_new:N \l__tasks_tmpa_coffin
 
@@ -161,29 +166,76 @@
 
 \cs_new_protected:Npn \__tasks_task:nnwwwwww #1#2[#3,#4][#5,#6](#7,#8)
   {
-    % set the width of an item depending on the number of columns
-    \dim_set:Nn \l__tasks_item_width_dim
+    % start a new item line if \l__tasks_item_full_line_bool
+    \bool_if:NT \l__tasks_item_full_line_bool
       {
-        (
-          \linewidth
-          - \l__tasks_columns_int \l__tasks_column_sep_dim
-          + \l__tasks_column_sep_dim
-        ) / \l__tasks_columns_int -
-        \l__tasks_depth_int \l__tasks_item_indent_dim
-        %  - \l__tasks_label_width_dim
-        %  - \l__tasks_label_offset_dim
-        \bool_if:NT \l__tasks_debug_bool { -2\fboxrule }
+        % add skip if we were in the middle of a line, i.e., in horizontal
+        % mode:
+        \mode_if_horizontal:T
+          { \skip_vertical:N \l__tasks_after_item_skip }
+        \tasks_new_row:
       }
     \int_gincr:N \g__tasks_current_col_num_int
+    \dim_set:Nn \l__tasks_item_width_dim
+      {
+        \bool_if:NTF \l__tasks_item_full_line_bool
+          { \linewidth }
+          {
+            (
+              \linewidth
+              - \l__tasks_columns_int \l__tasks_column_sep_dim
+              + \l__tasks_column_sep_dim
+            ) / \l__tasks_columns_int
+          }
+        - \l__tasks_depth_int \l__tasks_item_indent_dim
+        \bool_if:NT \l__tasks_debug_bool { -2\fboxrule }
+      }
     \__tasks_gset_rows_num:NN
       \g__tasks_total_items_int
       \l__tasks_columns_int
     % set \g__tasks_current_col_num_int to 1 if at the start of a row,
     % the also step \g__tasks_current_row_num_int :
-    \int_compare:nT { \g__tasks_current_col_num_int > \l__tasks_columns_int }
+    \int_compare:nNnT { \g__tasks_current_col_num_int } > { \l__tasks_columns_int }
       {
         \int_gset:Nn \g__tasks_current_col_num_int { 1 }
         \int_incr:N \g__tasks_current_row_num_int
+      }
+    \bool_if:NT \l__tasks_item_rest_of_line_bool
+      {
+        \int_compare:nNnTF { \l__tasks_item_columns_int } = { 0 }
+          {
+            \int_set:Nn \l__tasks_tmpa_int
+              { \l__tasks_columns_int - \g__tasks_current_col_num_int + 1 }
+            \int_set:Nn \l__tasks_tmpb_int { \l__tasks_tmpa_int -1 }
+          }
+          {
+            \int_set:Nn \l__tasks_tmpa_int
+              { \l__tasks_columns_int - \g__tasks_current_col_num_int + 1 }
+            \int_compare:nNnTF
+              { \l__tasks_tmpa_int } > { \l__tasks_item_columns_int }
+              { \int_set_eq:NN \l__tasks_tmpa_int \l__tasks_item_columns_int }
+              { \int_zero:N \l__tasks_item_columns_int }
+            \bool_if:nT
+              {
+                \l__tasks_item_rest_of_line_bool &&
+                !\int_compare_p:nNn { \l__tasks_item_columns_int} = { 0 }
+              }
+              {
+                \int_gadd:Nn \g__tasks_current_col_num_int
+                  { \l__tasks_item_columns_int -1 }
+                \int_gadd:Nn \g__tasks_total_items_int
+                  { \l__tasks_item_columns_int -1 }
+              }
+            \int_set:Nn \l__tasks_tmpb_int { \l__tasks_tmpa_int -1 }
+          }
+        \dim_set:Nn \l__tasks_item_width_dim
+          {
+            \l__tasks_tmpa_int \l__tasks_item_width_dim
+            + \l__tasks_tmpb_int \l__tasks_column_sep_dim
+            + \l__tasks_tmpb_int \l__tasks_item_indent_dim
+            \bool_if:NT \l__tasks_debug_bool
+              { + \int_eval:n { \l__tasks_tmpb_int * 2 } \fboxrule }
+          }
       }
     % set the item box:
     \hcoffin_set:Nn \l__tasks_item_coffin
@@ -226,7 +278,7 @@
         % - \l__tasks_label_width_dim - \l__tasks_label_offset_dim
       } { 0pt }
     % when a new row starts enter vertical mode:
-    \int_compare:nT { \g__tasks_current_col_num_int = 1 }
+    \int_compare:nNnT { \g__tasks_current_col_num_int } = { 1 }
       { \skip_vertical:N \c_zero_skip }
     % skip horizontally by \l__tasks_item_indent_dim
     \noindent
@@ -234,23 +286,34 @@
     % typeset the item (with the attached label protruding to the left):
     \coffin_typeset:Nnnnn \l__tasks_item_coffin
       { l } { T } { 0pt } { 0pt }
+    \bool_if:nT
+      {
+        \l__tasks_item_full_line_bool ||
+        (
+          \l__tasks_item_rest_of_line_bool &&
+          \int_compare_p:nNn { \l__tasks_item_columns_int } = { 0 }
+        )
+      }
+      { \tasks_new_row: }
     % are we between items in a row? The skip by \l__tasks_column_sep_dim :
-    \int_compare:nT
-      { \g__tasks_current_col_num_int < \l__tasks_columns_int }
+    \int_compare:nNnT
+      { \g__tasks_current_col_num_int } < { \l__tasks_columns_int }
       { \skip_horizontal:N \l__tasks_column_sep_dim }
     % if we ended a row and a new row is still to come skip vertically by
     % \l__tasks_after_item_skip :
     \bool_if:nT
       {
-        ( \int_compare_p:n { \g__tasks_current_col_num_int = \l__tasks_columns_int } )
+        ( \int_compare_p:nNn { \g__tasks_current_col_num_int } = { \l__tasks_columns_int } )
         &&
         ( \int_compare_p:n { \g__tasks_current_row_num_int != \l__tasks_rows_int } )
       }
       { \skip_vertical:N \l__tasks_after_item_skip }
-    % clear coffins:
+    % clean up:
     \coffin_clear:N \l__tasks_item_coffin
     \coffin_clear:N \l__tasks_label_coffin
     \coffin_clear:N \l__tasks_tmpa_coffin
+    \bool_set_false:N \l__tasks_item_full_line_bool
+    \bool_set_false:N \l__tasks_item_rest_of_line_bool
   }
 \cs_generate_variant:Nn \__tasks_task:nnwwwwww { VV }
 
@@ -318,8 +381,10 @@
     after-item-skip : skip      = 1ex plus 1ex minus 1ex
   }
 
-% in the next three commands we want a really unlikely to occurr marker; for
+% in the next three commands we want a really unlikely to occur marker; for
 % this we use $ with unusual catcode in ``$tasks$default$label$'':
+\cs_set:Nx \__tasks_restore_dollar:
+  { \char_set_catcode:nn {36} { \char_value_catcode:n {36} } }
 \char_set_catcode_alignment:N \$
 
 % the `default' template code:
@@ -389,7 +454,7 @@
       }
     \seq_map_inline:Nn \l__tasks_seq
       {
-        \__tasks_read_item:ww ##1 \q_stop
+        \__tasks_read_item:www ##1 \q_stop
         \bool_if:NTF \l__tasks_enumerate_bool
           {
             \tl_if_eq:VnT \l__tasks_tmp_label_tl { $tasks$default$label$ }
@@ -426,14 +491,46 @@
 \cs_generate_variant:Nn \tl_if_eq:nnTF { V }
 \cs_generate_variant:Nn \tl_if_eq:nnT { V }
 
-\cs_new:Npn \__tasks_read_item:ww
+% \l__tasks_item_rest_of_line_bool
+
+\cs_new_protected:Npn \__tasks_read_item:www
   {
-    \peek_meaning:NTF [
-      { \__tasks_read_item_aux:ww }
-      { \__tasks_read_item_aux:ww [$tasks$default$label$] }
+    \peek_meaning_remove:NTF !
+      {
+        \bool_set_true:N \l__tasks_item_full_line_bool
+        \__tasks_read_item_aux:ww
+      }
+      {
+        \peek_meaning_remove:NTF *
+          {
+            \bool_set_true:N \l__tasks_item_rest_of_line_bool
+            \__tasks_read_item_rest_of_line:ww
+          }
+          { \__tasks_read_item_aux:ww }
+      }
   }
 
-\cs_new_protected:Npn \__tasks_read_item_aux:ww [#1]#2 \q_stop
+\cs_new_protected:Npn \__tasks_read_item_rest_of_line:ww
+  {
+    \peek_meaning:NTF ( % )
+      { \__tasks_read_item_rest_of_line_aux:ww }
+      { \__tasks_read_item_rest_of_line_aux:ww (0) }
+  }
+
+\cs_new_protected:Npn \__tasks_read_item_rest_of_line_aux:ww (#1)
+  {
+    \int_set:Nn \l__tasks_item_columns_int {#1}
+    \__tasks_read_item_aux:ww
+  }
+
+\cs_new_protected:Npn \__tasks_read_item_aux:ww
+  {
+    \peek_meaning:NTF [ % ]
+      { \__tasks_read_item_aux_ii:ww }
+      { \__tasks_read_item_aux_ii:ww [$tasks$default$label$] }
+  }
+
+\cs_new_protected:Npn \__tasks_read_item_aux_ii:ww [#1]#2 \q_stop
   {
     \tl_set:Nn \l__tasks_tmp_label_tl { #1 }
     \tl_if_eq:nnF { #1 } { $tasks$default$label$ }
@@ -441,7 +538,8 @@
     \tl_set:Nn \l__tasks_item_tl { \ignorespaces #2 }
   }
 
-\char_set_catcode_math_toggle:N \$
+% \char_set_catcode_math_toggle:N \$
+\__tasks_restore_dollar:
 
 % --------------------------------------------------------------------------
 % choice box:
@@ -634,8 +732,14 @@
 2014/05/11 v0.9c  - remove definition of the \task macro: it is not necessary
                     for `tasks' to function but it conflicts e.g. with `ltxdoc'
                     class
-2014/07/03 v0.10  - new option `debug'
+2014/07/06 v0.10  - new option `debug'
                   - new option `column-sep
                   - renamed a few internal variables
                   - remove package from the `exsheets' bundle and distribute
                     it as package of its own
+                  - new: optional bang to a \task forces an item to use a full
+                    line (\task!)
+                  - new: optional star to a \task forces an item to use the
+                    complete remaining line (\task*); the star has itself has
+                    an optional argument for specifying the number of columns
+                    to span (\task*(<num>))
