@@ -25,7 +25,7 @@
 % If you have any ideas, questions, suggestions or bugs to report, please
 % feel free to contact me.
 % --------------------------------------------------------------------------
-\def\@tasks@date{2014/07/06}
+\def\@tasks@date{2014/07/20}
 \def\@tasks@version{0.10}
 
 \RequirePackage { expl3 , xparse , l3keys2e }
@@ -58,6 +58,12 @@
     The~ option~ `#1'~ has~ been~ removed~ from~ the~ `tasks'~ package.~
     Please~ see~ the~ documentation~ for~details.
   }
+
+
+% --------------------------------------------------------------------------
+% variants of kernel functions:
+\cs_generate_variant:Nn \tl_if_eq:nnTF { V }
+\cs_generate_variant:Nn \tl_if_eq:nnT  { V }
 
 % --------------------------------------------------------------------------
 % variables:
@@ -151,8 +157,7 @@
     \seq_set_split:Nnn \l__tasks_seq { #3 } { #4 }
     % remove the first (empty) item:
     \seq_pop_left:NN \l__tasks_seq \l__tasks_tmpa_tl
-    \tl_if_blank:VF \l__tasks_tmpa_tl
-      { \tl_show:N \l__tasks_tmpa_tl \@noitemerr }
+    \tl_if_blank:VF \l__tasks_tmpa_tl { \@noitemerr }
     \int_gset:Nn \g__tasks_total_items_int
       { \seq_count:N \l__tasks_seq }
     \UseInstance { tasks } { #1 }
@@ -419,6 +424,14 @@
           \l__tasks_label_offset_dim
           \l__tasks_label_default_offset_dim
       }
+    \dim_compare:nNnT
+      { \l__tasks_item_indent_dim }
+       <
+      { \l__tasks_label_offset_dim + \l__tasks_label_width_dim }
+      {
+        \dim_set:Nn \l__tasks_item_indent_dim
+          { \l__tasks_label_offset_dim + \l__tasks_label_width_dim }
+      }
     \bool_if:NT \l__tasks_custom_after_item_skip_bool
       {
         \skip_set_eq:NN
@@ -488,10 +501,6 @@
           }
       }
   }
-\cs_generate_variant:Nn \tl_if_eq:nnTF { V }
-\cs_generate_variant:Nn \tl_if_eq:nnT { V }
-
-% \l__tasks_item_rest_of_line_bool
 
 \cs_new_protected:Npn \__tasks_read_item:www
   {
@@ -538,7 +547,6 @@
     \tl_set:Nn \l__tasks_item_tl { \ignorespaces #2 }
   }
 
-% \char_set_catcode_math_toggle:N \$
 \__tasks_restore_dollar:
 
 % --------------------------------------------------------------------------
@@ -732,7 +740,7 @@
 2014/05/11 v0.9c  - remove definition of the \task macro: it is not necessary
                     for `tasks' to function but it conflicts e.g. with `ltxdoc'
                     class
-2014/07/06 v0.10  - new option `debug'
+2014/07/11 v0.20  - new option `debug'
                   - new option `column-sep
                   - renamed a few internal variables
                   - remove package from the `exsheets' bundle and distribute
