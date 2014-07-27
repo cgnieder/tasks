@@ -25,8 +25,8 @@
 % If you have any ideas, questions, suggestions or bugs to report, please
 % feel free to contact me.
 % --------------------------------------------------------------------------
-\def\@tasks@date{2014/07/20}
-\def\@tasks@version{0.10}
+\def\@tasks@date{2014/07/27}
+\def\@tasks@version{0.10a}
 
 \RequirePackage { expl3 , xparse , l3keys2e }
 \ProvidesExplPackage
@@ -625,7 +625,7 @@
     item-indent     .code:n     =
       \dim_set:Nn \l__tasks_item_indent_dim { #1 }
       \bool_set_true:N \l__tasks_item_indent_bool ,
-    columns-sep     .dim_set:N  = \l__tasks_column_sep_dim ,
+    column-sep      .dim_set:N  = \l__tasks_column_sep_dim ,
     before-skip     .skip_set:N = \l__tasks_before_list_skip ,
     after-skip      .skip_set:N = \l__tasks_after_list_skip ,
     after-item-skip .code:n     =
@@ -641,8 +641,7 @@
     \keys_set:nn { tasks / list } { #2 }
     \tl_if_blank:VT \l__tasks_instance_tl
       { \keys_set:nn { tasks / list } { style = alphabetize } }
-    \skip_vertical:N \l__tasks_before_list_skip
-    \skip_vertical:N \c_zero_skip
+    \vspace {\l__tasks_before_list_skip}
     \list {}
       {
         \dim_set:Nn \leftmargin { 0pt }
@@ -652,7 +651,7 @@
     \int_incr:N \l__tasks_depth_int
     \__tasks:VnnV \l__tasks_instance_tl { #3 } { #1 } \BODY
     \endlist
-    \skip_vertical:N \l__tasks_after_list_skip
+    \vspace {\l__tasks_after_list_skip}
   }
 
 % --------------------------------------------------------------------------
@@ -751,3 +750,5 @@
                     complete remaining line (\task*); the star has itself has
                     an optional argument for specifying the number of columns
                     to span (\task*(<num>))
+2014/07/27 v0.10a - bug-fix: correct typo in option definition of `column-sep'
+                  - insert before/after skip with \vspace*
