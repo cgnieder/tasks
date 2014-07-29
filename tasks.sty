@@ -25,7 +25,7 @@
 % If you have any ideas, questions, suggestions or bugs to report, please
 % feel free to contact me.
 % --------------------------------------------------------------------------
-\def\@tasks@date{2014/07/27}
+\def\@tasks@date{2014/07/29}
 \def\@tasks@version{0.10a}
 
 \RequirePackage { expl3 , xparse , l3keys2e }
@@ -169,7 +169,9 @@
   }
 \cs_generate_variant:Nn \__tasks:nnnn { VnnV }
 
-\cs_new_protected:Npn \__tasks_task:nnwwwwww #1#2[#3,#4][#5,#6](#7,#8)
+% #1: label
+% #2: item
+\cs_new_protected:Npn \__tasks_task:nn #1#2
   {
     % start a new item line if \l__tasks_item_full_line_bool
     \bool_if:NT \l__tasks_item_full_line_bool
@@ -247,7 +249,7 @@
       {
         \vcoffin_set:Nnn \l__tasks_tmpa_coffin
           { \l__tasks_item_width_dim }
-          { \__tasks_setup: #2 }
+          { \__tasks_setup: #2 \strut }
         \__tasks_debug:n
           {
             \coffin_typeset:Nnnnn \l__tasks_tmpa_coffin
@@ -320,7 +322,7 @@
     \bool_set_false:N \l__tasks_item_full_line_bool
     \bool_set_false:N \l__tasks_item_rest_of_line_bool
   }
-\cs_generate_variant:Nn \__tasks_task:nnwwwwww { VV }
+\cs_generate_variant:Nn \__tasks_task:nn { VV }
 
 \cs_new_protected:Npn \__tasks_setup:
   {
@@ -487,16 +489,14 @@
         \tl_put_left:NV \l__tasks_label_tl \l__tasks_label_format_tl
         \tl_if_eq:VnTF \l__tasks_tmp_label_tl { $tasks$default$label$ }
           {
-            \__tasks_task:VVwwwwww
+            \__tasks_task:VV
               \l__tasks_label_tl
               \l__tasks_item_tl
-              [ l , b ] [ l , t ] ( 0pt , 0pt )
           }
           {
-            \__tasks_task:VVwwwwww
+            \__tasks_task:VV
               \l__tasks_tmp_label_tl
               \l__tasks_item_tl
-              [ l , b ] [ l , t ] ( 0pt , 0pt )
             \tl_clear:N \l__tasks_tmp_label_tl
           }
       }
@@ -750,5 +750,8 @@
                     complete remaining line (\task*); the star has itself has
                     an optional argument for specifying the number of columns
                     to span (\task*(<num>))
-2014/07/27 v0.10a - bug-fix: correct typo in option definition of `column-sep'
+2014/07/29 v0.10a - bug-fix: correct typo in option definition of `column-sep'
                   - insert before/after skip with \vspace*
+                  - remove unnecessary (and unused) arguments of
+                    \__tasks_task:nn
+                  - add \strut to the end of an item
