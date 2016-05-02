@@ -272,7 +272,7 @@ following ones that can be set using a setup command:
   \keyval{style}{instance}\Default
      Choose the instance to be used.  Read more on this in
      section~\ref{sec:tasks}.
-  \keyval{counter-format}{counter specs}\Default
+  \keyval{counter-format}{counter specs}\Default{tsk[a])}
     \sinceversion{0.9}Sets a custom label.  The letters \code{tsk} are
     replaced with the task-counter.  An optional argument directly following
     these letters specifies the counter format: \code{1}: \cs*{arabic},
@@ -288,12 +288,15 @@ following ones that can be set using a setup command:
   \keyval{label-offset}{dim}\Default{.3333em}
     \sinceversion{0.7}Sets the offset, \ie, the distance between label and
     item.
+  \keyval{item-format}{code}\Default
+    \sinceversion{0.11}Can be used to apply a formatting like, \eg,
+    \cs*{bfseries} to the items.
   \keyval{item-indent}{dim}\Default{2.5em}
     \sinceversion{0.9a}The indent of an item, \ie, the horizontal space
     available for both label and label-offset.  If
     \[
       \text{\code{indent}} =
-      \text{\code{label-width}} + \text{\code{label=offset}}
+      \text{\code{label-width}} + \text{\code{label-offset}}
     \]
     the label will align with the textblock above (if
     \keyis{label-align}{left} is set).  Please see figure~\ref{fig:lengths}
