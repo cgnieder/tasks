@@ -29,8 +29,8 @@
 \ExplSyntaxOn
 
 \tl_const:Nn \c_tasks_name_tl    {tasks}
-\tl_const:Nn \c_tasks_date_tl    {2016/05/03}
-\tl_const:Nn \c_tasks_version_tl {0.11}
+\tl_const:Nn \c_tasks_date_tl    {2016/05/04}
+\tl_const:Nn \c_tasks_version_tl {0.11a}
 \tl_const:Nn \c_tasks_info_tl    {Horizontal columned lists}
   
 \ProvidesExplPackage
@@ -602,6 +602,7 @@
   {
     debug           .bool_set:N = \l__tasks_debug_bool ,
     style           .tl_set:N   = \l__tasks_instance_tl ,
+    style           .initial:n  = alphabetize ,
     counter-format  .tl_set:N   = \l__tasks_custom_label_pattern_tl ,
     label           .code:n     =
       \bool_set_true:N \l__tasks_custom_label_bool
@@ -638,8 +639,7 @@
       { \vspace {\l__tasks_before_list_skip} }
     \list {}
       {
-        \keys_set:nn {tasks/list} { style = alphabetize , #2 }
-        % \keys_set:nn {tasks/list} {#2}
+        \keys_set:nn {tasks/list} {#2}
         \dim_set:Nn \leftmargin  {0pt}
         \dim_set:Nn \rightmargin {0pt}
       }
@@ -750,3 +750,4 @@
                   - some changes to how the list is displayed, especially
                     regarding spacing -- it now better resembles the standard
                     lists
+2016/05/04 v0.11a - enable `style' option globally again

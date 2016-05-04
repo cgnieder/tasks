@@ -290,7 +290,8 @@ following ones that can be set using a setup command:
     item.
   \keyval{item-format}{code}\Default
     \sinceversion{0.11}Can be used to apply a formatting like, \eg,
-    \cs*{bfseries} to the items.
+    \cs*{bfseries} to the items. This may be a macro accepting the item as
+    mandatory argument.
   \keyval{item-indent}{dim}\Default{2.5em}
     \sinceversion{0.9a}The indent of an item, \ie, the horizontal space
     available for both label and label-offset.  If
@@ -406,9 +407,8 @@ already on page~\pageref{debug}):
 \end{example}
 
 \section{Available Instances}\label{sec:tasks:instances}
-When you use the package option \option{more} of the \Tasks\ package or load
-\ExSheets\ with the \option{load-tasks} option there are currently three
-additional instances for the \code{tasks} object available:
+There are currently three additional instances for the \code{tasks} object
+available:
 \begin{description}
   \item[itemize] uses \cs*{labelitemi} as labels.
   \item[enumerate] enumerates the items with 1., 2., \ldots
