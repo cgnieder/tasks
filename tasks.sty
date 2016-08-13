@@ -29,8 +29,8 @@
 \ExplSyntaxOn
 
 \tl_const:Nn \c_tasks_name_tl    {tasks}
-\tl_const:Nn \c_tasks_date_tl    {2016/05/04}
-\tl_const:Nn \c_tasks_version_tl {0.11a}
+\tl_const:Nn \c_tasks_date_tl    {2016/08/13}
+\tl_const:Nn \c_tasks_version_tl {0.12}
 \tl_const:Nn \c_tasks_info_tl    {Horizontal columned lists}
   
 \ProvidesExplPackage
@@ -185,7 +185,8 @@
       \l__tasks_columns_int
     % set \g__tasks_current_col_num_int to 1 if at the start of a row,
     % then also step \g__tasks_current_row_num_int :
-    \int_compare:nNnT { \g__tasks_current_col_num_int } > { \l__tasks_columns_int }
+    \int_compare:nNnT
+      { \g__tasks_current_col_num_int } > { \l__tasks_columns_int }
       {
         \int_gset:Nn \g__tasks_current_col_num_int { 1 }
         \int_incr:N \g__tasks_current_row_num_int
@@ -260,10 +261,15 @@
     % attach the label box at the left of the item box, shifted by
     % \l__tasks_label_offset_dim :
     \coffin_attach:NnnNnnnn
-      \l__tasks_item_coffin { l } { T }
-      \l__tasks_label_coffin { r } { T }
-      { - \l__tasks_label_offset_dim
-        % - \l__tasks_label_width_dim - \l__tasks_label_offset_dim
+      \l__tasks_item_coffin  {l} {T}
+      \l__tasks_label_coffin {l} {T}
+      {
+        \dim_compare:nNnTF
+          { \l__tasks_item_indent_dim }
+          <
+          { \l__tasks_label_offset_dim + \l__tasks_label_width_dim }
+          {0pt}
+          { - \l__tasks_label_width_dim - \l__tasks_label_offset_dim }
       } { 0pt }
     % when a new row starts enter vertical mode:
     \int_compare:nNnT { \g__tasks_current_col_num_int } = { 1 }
@@ -273,7 +279,10 @@
     \skip_horizontal:N \l__tasks_item_indent_dim
     % typeset the item (with the attached label protruding to the left):
     \coffin_typeset:Nnnnn \l__tasks_item_coffin
-      {l} {T} {0pt} {0pt}
+      {l}
+      {T}
+      {0pt}
+      {0pt}
     \bool_if:nT
       {
         \l__tasks_item_full_line_bool ||
@@ -312,6 +321,18 @@
     \dim_set_eq:NN \parskip \parsep
     \dim_set_eq:NN \parindent \listparindent
     \noindent
+    \dim_compare:nNnT
+      { \l__tasks_item_indent_dim }
+       <
+      { \l__tasks_label_offset_dim + \l__tasks_label_width_dim }
+      {
+        \skip_horizontal:n
+          {
+            \l__tasks_label_offset_dim
+            + \l__tasks_label_width_dim
+            - \l__tasks_item_indent_dim
+          }
+      }
     \strut
   }
 
@@ -409,14 +430,14 @@
           \l__tasks_label_offset_dim
           \l__tasks_label_default_offset_dim
       }
-    \dim_compare:nNnT
-      { \l__tasks_item_indent_dim }
-       <
-      { \l__tasks_label_offset_dim + \l__tasks_label_width_dim }
-      {
-        \dim_set:Nn \l__tasks_item_indent_dim
-          { \l__tasks_label_offset_dim + \l__tasks_label_width_dim }
-      }
+    % \dim_compare:nNnT
+    %   { \l__tasks_item_indent_dim }
+    %    <
+    %   { \l__tasks_label_offset_dim + \l__tasks_label_width_dim }
+    %   {
+    %     \dim_set:Nn \l__tasks_item_indent_dim
+    %       { \l__tasks_label_offset_dim + \l__tasks_label_width_dim }
+    %   }
     \bool_if:NT \l__tasks_custom_after_item_skip_bool
       {
         \skip_set_eq:NN
@@ -530,13 +551,13 @@
       { \__tasks_read_item_aux_ii:ww }
       { \__tasks_read_item_aux_ii:ww [$tasks$default$label$] }
   }
-
+  
 \cs_new_protected:Npn \__tasks_read_item_aux_ii:ww [#1]#2 \q_stop
   {
     \tl_set:Nn \l__tasks_tmp_label_tl {#1}
     \tl_if_eq:nnF { #1 } { $tasks$default$label$ }
       { \tl_put_left:NV \l__tasks_tmp_label_tl \l__tasks_label_format_tl }
-    \tl_set:Nn \l__tasks_item_tl { \ignorespaces #2 }
+    \tl_set:Nx \l__tasks_item_tl { \tl_trim_spaces:n {#2} }
   }
 
 \__tasks_restore_dollar:
@@ -751,3 +772,7 @@
                     regarding spacing -- it now better resembles the standard
                     lists
 2016/05/04 v0.11a - enable `style' option globally again
+2016/08/13 v0.12  - the item indent and label width and label offset now play
+                    together like one would expect: an item indent of 0pt will
+                    align the complete item with the margin and the needed
+                    overlap for the label is reserved
