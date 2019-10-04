@@ -45,6 +45,14 @@
 \cs_generate_variant:Nn \tl_if_eq:nnT  {V}
 \cs_generate_variant:Nn \coffin_attach:NnnNnnnn {NnnNx}
 \cs_generate_variant:Nn \tl_set_rescan:Nnn {NnV}
+\cs_generate_variant:Nn \hbox_set:Nn {NV}
+
+% --------------------------------------------------------------------------
+\msg_new:nnn {tasks} {width-too-small}
+  {
+    The~ label~ width~ is~ too~ small~ \msg_line_context: .~
+    Please~ set~ it~ at~ least~ to~ #1.
+  }
 
 % --------------------------------------------------------------------------
 % variables:
@@ -112,6 +120,7 @@
 \int_new:N    \l__tasks_tmpb_int
 \tl_new:N     \l__tasks_tmpa_tl
 \coffin_new:N \l__tasks_tmpa_coffin
+\box_new:N    \l__tasks_tmpa_box
 
 \cs_new:Npn \__tasks_debug:n #1
   {
@@ -485,6 +494,16 @@
           \l__tasks_item_format_tl
           \l__tasks_custom_item_format_tl
       }
+    % prepare counter according to given format:  
+    \tl_set:Nx \l__tasks_tmpa_tl
+      {
+        \bool_if:NTF \l__tasks_custom_counter_format_bool
+          { \tl_to_str:V \l__tasks_custom_counter_format_tl }
+          { \tl_to_str:V \l__tasks_counter_format_tl }
+        }
+    \tl_replace_once:Nnn \l__tasks_tmpa_tl {*} {{task}}
+    \tl_set_rescan:NnV \l__tasks_tmpa_tl {} \l__tasks_tmpa_tl
+    % do the tasks:
     \seq_map_inline:Nn \l__tasks_seq
       {
         \__tasks_read_item:www ##1 \q_stop
@@ -493,17 +512,6 @@
             \tl_if_eq:VnT \l__tasks_tmp_label_tl { $tasks$default$label$ }
               {
                 \refstepcounter {task}
-                \tl_set:Nx \l__tasks_tmpa_tl
-                  {
-                    \bool_if:NTF \l__tasks_custom_counter_format_bool
-                      { \tl_to_str:V \l__tasks_custom_counter_format_tl }
-                      { \tl_to_str:V \l__tasks_counter_format_tl }
-                  }
-                \tl_replace_once:Nnn
-                  \l__tasks_tmpa_tl
-                  {*}
-                  {{task}}
-                \tl_set_rescan:NnV \l__tasks_tmpa_tl {} \l__tasks_tmpa_tl
                 \tl_set:NV \l__tasks_label_tl \l__tasks_tmpa_tl
               }
           }
@@ -512,6 +520,16 @@
               { \tl_set_eq:NN \l__tasks_label_tl \labelitemi }
           }
         \tl_put_left:NV \l__tasks_label_tl \l__tasks_label_format_tl
+        % check if the label width is big enough:
+        \hbox_set:NV \l__tasks_tmpa_box \l__tasks_label_tl
+        \dim_compare:nNnF
+          { \box_wd:N \l__tasks_tmpa_box }
+          <
+          { \l__tasks_label_width_dim }
+          {
+            \msg_warning:nnx {tasks} {width-too-small}
+              { \dim_to_decimal:n { \box_wd:N \l__tasks_tmpa_box } }
+          }
         \tl_if_eq:VnTF \l__tasks_tmp_label_tl { $tasks$default$label$ }
           {
             \__tasks_task:VVV
