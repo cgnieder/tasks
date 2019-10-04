@@ -73,12 +73,20 @@
     list.
   }
 
-\msg_new:nnn {tasks} {option-deprecated}
+\msg_new:nnn {tasks} {deprecated}
   {
-    You've~ tried~ setting~ option~ \msg_line_context: .~ However,~ option~
-    `#1'~ is~ deprecated.~
-    \tl_if_blank:nF {#2} {Please~ use~ option~ `#2'~ instead.~}
+    You've~ tried~ setting~ #1~ `#2'~ \msg_line_context: .~ However,~
+    #1~ `#2'~ is~ deprecated.~
+    \tl_if_blank:nF {#2} {Please~ use~ #1~ `#3'~ instead.~}
     Refer~ to~ the~ manual~ for~ details.
+  }
+
+% --------------------------------------------------------------------------
+\cs_new_protected:Npn \tasks_deprecated:NN #1#2
+  {
+    \msg_warning:nnnnn {tasks} {deprecated} {command} {#1} {#2}
+    \cs_undefine:N #1
+    \cs_new:Npn #1 {#2}
   }
 
 % --------------------------------------------------------------------------
@@ -471,7 +479,7 @@
       }
     \__tasks_label_align:V \l__tasks_label_align_tl
     % need this for enumerate list:
-    \bool_if:NT \l__tasks_resume_bool
+    \bool_if:NF \l__tasks_resume_bool
       { \setcounter {task} {0} }
     \int_set:Nn \l__tasks_columns_int {#2}
     % set all the items in their own coffins and join with the ground:
@@ -594,10 +602,6 @@
 \__tasks_restore_dollar:
 
 % --------------------------------------------------------------------------
-% base instance:
-% ALPHABETIZE: a) b) c)
-\DeclareInstance {tasks} {alphabetize} {default} { }
-
 \keys_define:nn {tasks/list}
   {
     debug            .bool_set:N = \l__tasks_debug_bool ,
@@ -606,7 +610,7 @@
     style            .tl_set:N   = \l__tasks_instance_tl ,
     style            .initial:n  = alphabetize ,
     counter-format   .code:n     =
-      \msg_warning:nnnn {tasks} {option-deprecated} {counter-format} {label}
+      \msg_warning:nnnn {tasks} {deprecated} {option} {counter-format} {label}
       \keys_set:nn {tasks/list} { label = #1 } ,
     label            .code:n     =
       \bool_set_true:N \l__tasks_custom_label_bool
@@ -684,23 +688,30 @@
 
 % --------------------------------------------------------------------------
 % the user environment:
-\NewDocumentCommand \NewTasks { O{}mO{\task}D(){1} }
+\NewDocumentCommand \NewTasksEnvironment { O{}mO{\task}D(){1} }
   {
     \NewDocumentEnvironment {#2} { O{}D(){#4}+b }
       { \tasks_body:nnnn {#3} {#1,##1} {##2} {##3} }
       { }
   }
 
-\NewDocumentCommand \RenewTasks { O{}mO{\task}D(){1} }
+\NewDocumentCommand \RenewTasksEnvironment { O{}mO{\task}D(){1} }
   {
     \RenewDocumentEnvironment {#2} { O{}D(){#4}+b }
       { \tasks_body:nnnn {#3} {#1,##1} {##2} {##3} }
       { }
   }
 
+\tasks_deprecated:NN \NewTasks   \NewTasksEnvironment
+\tasks_deprecated:NN \RenewTasks \RenewTasksEnvironment
+  
 % --------------------------------------------------------------------------
 % default list:
-\NewTasks {tasks}
+\NewTasksEnvironment {tasks}
+
+% base instance:
+% ALPHABETIZE: a) b) c)
+\DeclareInstance {tasks} {alphabetize} {default} { }
 
 % ITEMIZE:
 \DeclareInstance {tasks} {itemize} {default}
@@ -792,3 +803,5 @@
                     protrude to the margin
 2019/10/04 v1.0   - get rid of `cntformats', `environ' and `epic'
                   - no default multiple choice any more
+                  - rename \NewTasks and \RenewTasks
+                  - the option `counter-format' is deprecated

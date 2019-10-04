@@ -35,7 +35,8 @@
   url      = {https://github.com/cgnieder/tasks/} ,
   info     = {horizontally columned lists} ,
   add-cmds = {
-    NewTasks,
+    NewTasksEnvironment,
+    RenewTasksEnvironment,
     settasks,
     startnewitemline ,
     task
@@ -46,11 +47,6 @@
     sample, Sample , theexercise
   }
 }
-
-% \BeforeBeginEnvironment{example}{\vspace{\baselineskip}}
-% \AfterEndEnvironment{example}{\vspace{\baselineskip}}
-% \BeforeBeginEnvironment{sourcecode}{\vspace{\baselineskip}}
-% \AfterEndEnvironment{sourcecode}{\vspace{\baselineskip}}
 
 \newpackagename\ExSheets{ExSheets}
 \newpackagename\xsim{xsim}
@@ -82,7 +78,8 @@
 
 \begin{document}
 
-\section{Motivation}
+\section{Preface}
+\subsection{Motivation}
 Originally \Tasks\ has been an integral part of the
 \ExSheets\changedversion{0.7} package.  However, users told me that it indeed
 could be useful to have it as a stand-alone package not having to load the
@@ -100,15 +97,24 @@ what \code{tasks} primarily is for. If you don't need this feature you're
 better off using traditional \LaTeX{} lists and the \pkg{enumitem} package for
 customization.
 
+\subsection{Changes}
+The step to version~1.0 brought some significant changes:
+\begin{itemize}
+  \item the option \option{counter-format} is deprecated.  Labels can now be
+    set quite similar to the way they are set in \pkg{enumitem}.  This also
+    made the \code{emuerate} option of the list template superfluous which has
+    been removed accordingly.
+  \item The commands \cs{NewTasks} and \cs{RenewTasks} have ben renamed.
+  \item The multiple choice lists have been removed.
+  \item Custom definitions can be put in a \code{tasks.cfg} file which is
+    automatically loaded if available.
+\end{itemize}
+
 \section{License and Requirements}\label{sec:license}
 \license
 
 \Tasks\ requires the \bnd{l3kernel}~\cite{bnd:l3kernel} bundle,
-\needpackage{xparse} and \pkg{xtemplate}.%  and \needpackage{l3keys2e} which are
-% part of the \bnd{l3packages}~\cite{bnd:l3packages} bundle,
-% \pkg{epic}~\cite{pkg:epic}, \pkg{cntformats}~\cite{pkg:cntformats}, and
-% \pkg{environ}~\cite{pkg:environ}.
-
+\needpackage{xparse} and \pkg{xtemplate}.
 
 \section{How it works}
 \subsection{The Basics}
@@ -263,15 +269,13 @@ following ones that can be set using a setup command:
   \keyval{style}{instance}\Default
      Choose the instance to be used.  Read more on this in
      section~\ref{sec:tasks}.
-  \keyval{counter-format}{counter specs}\Default{\cs*{alph}\code{*)}}
-    \changedversion{1.0}Sets a custom label.  The \code{*} is replaced by
-    \Marg{task}.  This is heavily inspired by
-    \pkg{enumitem}'s~\cite{pkg:enumitem} \code{label} option.
   \keyval{label-format}{code}\Default
     \changedversion{0.9}Can be used to apply a formatting like, \eg,
     \cs*{bfseries} to the labels.
-  \keyval{label}{code}\Default
-    \changedversion{0.9}Overwrite the automatic label to a custom one.
+  \keyval{label}{code}\Default{\cs*{alph}\code{*)}}
+    \changedversion{1.0}Sets a custom label.  The \code{*} is replaced by
+    \Marg{task}.  This is heavily inspired by
+    \pkg{enumitem}'s~\cite{pkg:enumitem} \code{label} option.
   \keyval{label-width}{dim}\Default{1em}
     Sets the width of the item labels.
   \keyval{label-offset}{dim}\Default{.3333em}
@@ -342,7 +346,7 @@ following ones that can be set using a setup command:
 
 Now the same list as above but with three columns and a different label:
 \begin{example}
-  \begin{tasks}[counter-format=(\roman*),label-width=4ex](2)
+  \begin{tasks}[label=(\roman*),label-width=4ex](2)
     \task \Sample
     \task \sample\ \sample
     \task \sample
@@ -350,13 +354,6 @@ Now the same list as above but with three columns and a different label:
     \task \sample\par\sample
   \end{tasks}
 \end{example}
-% \begin{tasks}[counter-format=(\roman*),label-width=4ex](3)
-%  \task \Sample
-%  \task \sample\ \sample
-%  \task \sample
-%  \task \Sample
-%  \task \sample\par\sample
-% \end{tasks}
 
 Let's use it inside a question, \ie, inside \xsim's \env{exercise}
 environment:
@@ -364,10 +361,10 @@ environment:
   % since settings are local the following ones will be lost
   % outside this example;
   \settasks{
-    counter-format = \theexercise.\arabic* ,
-    item-indent    = 2em ,
-    label-width    = 2em ,
-    label-offset   = 0pt
+    label        = \theexercise.\arabic* ,
+    item-indent  = 2em ,
+    label-width  = 2em ,
+    label-offset = 0pt
   }
   \begin{exercise}
     I have these two tasks for you. Shall we begin?
@@ -430,28 +427,28 @@ argument of \cs{task}. This will temporarily overwrite the default label.
   \end{tasks}
 \end{example}
 
-\section{New Tasks}
+\section{New \code{tasks}-like Environments}
 It is possible to add custom environments that work like the \code{tasks}
 environment.
 \begin{commands}
-  \command{NewTasks}[\oarg{options}\marg{name}\oarg{separator}\darg{cols}]
+  \command{NewTasksEnvironment}[\oarg{options}\marg{name}\oarg{separator}\darg{cols}]
     Define environment \meta{name} that uses \meta{separator} to introduce a
     new item.  Default for \meta{separator} is \cs{task}, default for
     \meta{cols} is \code{1}.  The \meta{options} are the ones described in
     section~\ref{sec:tasks:options}.
-  \command{RenewTasks}[\oarg{options}\marg{name}\oarg{separator}\darg{cols}]
-    Renew environment previously defined with \cs{NewTasks}.
+  \command{RenewTasksEnvironment}[\oarg{options}\marg{name}\oarg{separator}\darg{cols}]
+    Renew environment previously defined with \cs{NewTasksEnvironment}.
 \end{commands}
 The \env{tasks} environment is defined as follows:
 \begin{sourcecode}
-  \NewTasks{tasks}
+  \NewTasksEnvironment{tasks}
 \end{sourcecode}
 
 The separator does not have to be a control sequence:
 \begin{example}
   % preamble:
   % \usepackage{dingbat}
-  \NewTasks[label=\footnotesize\leftthumbsup,label-width=15pt]{done}[*]
+  \NewTasksEnvironment[label=\footnotesize\leftthumbsup,label-width=15pt]{done}[*]
   \begin{done}
     * First task
     * Second task
@@ -472,7 +469,7 @@ argument.
 \begin{example}
   % preamble:
   % \usepackage{dingbat}
-  \NewTasks[label=\footnotesize\leftthumbsup,label-width=15pt]{done}[*]
+  \NewTasksEnvironment[label=\footnotesize\leftthumbsup,label-width=15pt]{done}[*]
   \begin{done}(3)
     * First task
     * Second task
@@ -480,40 +477,6 @@ argument.
     * Fourth task
   \end{done}
 \end{example}
-
-% Let's say you want a \env*{multiplechoice} environment that has three columns
-% in its default state.  You could do something like this:
-% \begin{example}
-%   % preamble:
-%   % \NewTasks[style=multiplechoice]{multiplechoice}[\choice](3)
-%   % \newcommand*\correct{\PrintSolutionsTF{\checkedchoicebox}{\choicebox}}
-%   %
-%   % \PrintSolutionsTF and the {question} environment are provided
-%   % by the ExSheets package
-%   \begin{question}
-%     \begin{multiplechoice}
-%       \choice First choice
-%       \choice Second choice
-%       \choice[\correct] Third choice
-%     \end{multiplechoice}
-%   \end{question}
-%   \begin{solution}[print]
-%     \begin{multiplechoice}
-%       \choice First choice
-%       \choice Second choice
-%       \choice[\correct] Third choice
-%     \end{multiplechoice}
-%   \end{solution}
-% \end{example}
-
-% The last example shows you two additional commands:
-% \begin{commands}
-%   \command{choicebox}[\quad\choicebox]
-%     Print an empty square.
-%   \command{checkedchoicebox}[\quad\checkedchoicebox]
-%     Print a crossed-out square.
-% \end{commands}
-
 
 \section{Styling \Tasks}
 \Tasks\ uses \pkg{xtemplate} to declare additional instances for the lists.
@@ -532,10 +495,8 @@ of their usage.
   \DeclareTemplateInterface{tasks}{default}{3}
     {
       % option        : type      = default
-      enumerate       : boolean   = true    ,
-      label           : tokenlist           ,
+      label           : tokenlist = \alph*) ,
       indent          : length    = 2.5em   ,
-      counter-format  : tokenlist = \alph*) ,
       label-format    : tokenlist           ,
       label-width     : length    = 1em     ,
       label-offset    : length    = .3333em ,
@@ -546,24 +507,17 @@ of their usage.
 \subsubsection{Predefined Instances}
 This is rather brief this time:
 \begin{sourcecode}
-  % ALPHABETIZE: a) b) c)
+  % alphabetize: a) b) c)
   \DeclareInstance{tasks}{alphabetize}{default}{}
-  % available when `load-tasks=true':
-  % ITEMIZE:
-  \DeclareInstance{tasks}{itemize}{default}
+  % itemize
+  \DeclareInstance {tasks} {itemize} {default}
     {
-      enumerate   = false ,
-      label-width = 1.125em
+      label-width  = 1.125em ,
+      label        = \labelitemi
     }
-  % ENUMERATE:
-  \DeclareInstance{tasks}{enumerate}{default}
-    { counter-format = \arabic*. }
+  % enumerate:
+  \DeclareInstance {tasks} {enumerate} {default}
+    { label = \arabic*. }
 \end{sourcecode}
-% % MULTIPLECHOICE:
-% \DeclareInstance{tasks}{multiplechoice}{default}
-%   {
-%     enumerate = false       ,
-%     label     = \choicebox  ,
-%   }
 
 \end{document}
