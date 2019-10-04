@@ -1,7 +1,7 @@
 % --------------------------------------------------------------------------
 % the TASKS package
 % 
-%   Horizontal columned lists.
+%   horizontally columned lists
 % 
 % --------------------------------------------------------------------------
 % Clemens Niederberger
@@ -42,7 +42,7 @@
     \c_tasks_version_number_tl
     \c_tasks_version_subrelease_tl
   }
-\tl_const:Nn \c_tasks_info_tl {Horizontally ~ columned ~ lists}
+\tl_const:Nn \c_tasks_info_tl {horizontally ~ columned ~ lists}
 
 \ProvidesExplPackage
   {tasks}
@@ -57,12 +57,28 @@
 \cs_generate_variant:Nn \coffin_attach:NnnNnnnn {NnnNx}
 \cs_generate_variant:Nn \tl_set_rescan:Nnn {NnV}
 \cs_generate_variant:Nn \hbox_set:Nn {NV}
+\cs_generate_variant:Nn \msg_warning:nnnn {nnV,nnnx}
 
 % --------------------------------------------------------------------------
 \msg_new:nnn {tasks} {width-too-small}
   {
-    The~ label~ width~ is~ too~ small~ \msg_line_context: .~
-    Please~ set~ it~ at~ least~ to~ #1.
+    The~ width~ off~ `#1'~ is~ too~ small~ \msg_line_context: .~
+    Please~ set~ it~ at~ least~ to~ #2.
+  }
+
+\msg_new:nnn {tasks} {no-item}
+  {
+    You've~ placed~ `#1'~ before~ the~ first~ #2~ \msg_line_context: .~
+    I~ will~ through~ it~ away~ and~ ignore~ it~ for~ the~ rest~ of~ the~
+    list.
+  }
+
+\msg_new:nnn {tasks} {option-deprecated}
+  {
+    You've~ tried~ setting~ option~ \msg_line_context: .~ However,~ option~
+    `#1'~ is~ deprecated.~
+    \tl_if_blank:nF {#2} {Please~ use~ option~ `#2'~ instead.~}
+    Refer~ to~ the~ manual~ for~ details.
   }
 
 % --------------------------------------------------------------------------
@@ -77,14 +93,13 @@
 \int_new:N    \l__tasks_item_columns_int
 \int_new:N    \g__tasks_env_int
 
-\bool_new:N   \l__tasks_enumerate_bool
 \bool_new:N   \l__tasks_resume_bool
 \bool_new:N   \l__tasks_load_tasks_bool
 \bool_new:N   \l__tasks_label_width_bool
 \bool_new:N   \l__tasks_item_indent_bool
 \bool_new:N   \l__tasks_label_offset_bool
 \bool_new:N   \l__tasks_custom_label_bool
-\bool_new:N   \l__tasks_custom_counter_format_bool
+\bool_new:N   \l__tasks_custom_label_format_bool
 \bool_new:N   \l__tasks_custom_after_item_skip_bool
 \bool_new:N   \l__tasks_debug_bool
 \bool_new:N   \l__tasks_item_full_line_bool
@@ -94,8 +109,6 @@
 \tl_new:N     \l__tasks_label_tl
 \tl_new:N     \l__tasks_custom_label_tl
 \tl_new:N     \l__tasks_label_format_tl
-\tl_new:N     \l__tasks_counter_format_tl
-\tl_new:N     \l__tasks_custom_counter_format_tl
 \tl_new:N     \l__tasks_custom_label_format_tl
 \tl_new:N     \l__tasks_item_format_tl
 \tl_new:N     \l__tasks_custom_item_format_tl
@@ -113,6 +126,7 @@
 \dim_new:N    \l__tasks_label_offset_dim
 \dim_new:N    \l__tasks_label_default_offset_dim
 \dim_new:N    \l__tasks_column_sep_dim
+\dim_new:N    \l__tasks_correction_dim
 
 \dim_new:N    \l__tasks_full_width_dim
 
@@ -125,7 +139,6 @@
 \coffin_new:N \l__tasks_label_coffin
 
 \newcounter {task}
-% \tl_set:Nn \thetask { \alph {task} ) }
 
 % temporary variables:
 \int_new:N    \l__tasks_tmpa_int
@@ -152,8 +165,8 @@
     \seq_set_split:Nnn \l__tasks_seq {#3} {#4}
     % remove the first (empty) item:
     \seq_pop_left:NN \l__tasks_seq \l__tasks_tmpa_tl
-    % % TODO: insert code but issue warning
-    % \tl_if_blank:VF \l__tasks_tmpa_tl { \@noitemerr }
+    \tl_if_blank:VF \l__tasks_tmpa_tl
+      { \msg_warning:nnVn {tasks}{no-item} \l__tasks_tmpa_tl {#3} }
     \int_gset:Nn \g__tasks_total_items_int
       { \seq_count:N \l__tasks_seq }
     \UseInstance {tasks} {#1}
@@ -208,7 +221,7 @@
       { \l_tmpa_dim }
       >
       { \l__tasks_full_width_dim }
-      { \dim_sub:Nn \l__tasks_item_width_dim { .00001pt } }
+      { \dim_sub:Nn \l__tasks_item_width_dim { \l__tasks_correction_dim } }
     \__tasks_gset_rows_num:NN
       \g__tasks_total_items_int
       \l__tasks_columns_int
@@ -273,7 +286,7 @@
         \vcoffin_set:Nnn \l__tasks_tmpa_coffin
           {
             \dim_abs:n { \l__tasks_label_width_dim }
-            \bool_if:NT \l__tasks_debug_bool {-2\fboxrule }
+            \bool_if:NT \l__tasks_debug_bool {+2\fboxrule }
           }
           {
             \noindent
@@ -303,12 +316,8 @@
           \l__tasks_item_coffin  {l} {T}
           \l__tasks_label_coffin {l} {T}
           {
-            \dim_compare:nNnTF
-              { \l__tasks_item_indent_dim }
-              <
-              { \l__tasks_label_offset_dim + \l__tasks_label_width_dim }
-              {0pt}
-              { - \l__tasks_label_width_dim - \l__tasks_label_offset_dim }
+            - \l__tasks_label_offset_dim - \l__tasks_label_width_dim
+            \bool_if:NT \l__tasks_debug_bool {-2\fboxrule }
           }
           {0pt}
       }
@@ -362,21 +371,6 @@
     \dim_set_eq:NN \parskip \parsep
     \dim_set_eq:NN \parindent \listparindent
     \noindent
-    \dim_compare:nNnF { \l__tasks_label_width_dim } < {0pt}
-      {
-        \dim_compare:nNnT
-          { \l__tasks_item_indent_dim }
-          <
-          { \l__tasks_label_offset_dim + \l__tasks_label_width_dim }
-          {
-            \skip_horizontal:n
-              {
-                \l__tasks_label_offset_dim
-                + \l__tasks_label_width_dim
-                - \l__tasks_item_indent_dim
-              }
-          }
-      }
     \strut
   }
 
@@ -423,15 +417,13 @@
 % the `default' template interface:
 \DeclareTemplateInterface {tasks} {default} {3}
   {
-    enumerate       : boolean   = true    ,
-    label           : tokenlist           ,
-    indent          : length    = 2.5em   ,
-    counter-format  : tokenlist = \alph*) ,
+    label           : tokenlist   = \alph*) ,
+    indent          : length      = 2.5em   ,
     label-format    : tokenlist ,
-    label-width     : length    = 1em     ,
-    label-offset    : length    = .3333em ,
+    label-width     : length      = 11pt    ,
+    label-offset    : length      = .3333em ,
     item-format     : tokenlist ,
-    after-item-skip : skip      = 1ex plus 1ex minus 1ex
+    after-item-skip : skip        = 1ex plus 1ex minus 1ex
   }
 
 % in the next three commands we want a really unlikely to occur marker; for
@@ -443,10 +435,8 @@
 % the `default' template code:
 \DeclareTemplateCode {tasks} {default} {3}
   {
-    enumerate       = \l__tasks_enumerate_bool           ,
     label           = \l__tasks_label_tl                 ,
     indent          = \l__tasks_item_default_indent_dim  ,
-    counter-format  = \l__tasks_counter_format_tl        ,
     label-format    = \l__tasks_label_format_tl          ,
     label-width     = \l__tasks_label_default_width_dim  ,
     label-offset    = \l__tasks_label_default_offset_dim ,
@@ -479,16 +469,9 @@
           \l__tasks_after_item_skip
           \l__tasks_custom_after_item_skip
       }
-    \bool_if:NT \l__tasks_custom_label_bool
-      {
-        \tl_set_eq:NN
-          \l__tasks_label_tl
-          \l__tasks_custom_label_tl
-        \bool_set_false:N \l__tasks_enumerate_bool
-      }
     \__tasks_label_align:V \l__tasks_label_align_tl
     % need this for enumerate list:
-    \bool_if:nT { !\l__tasks_resume_bool && \l__tasks_enumerate_bool }
+    \bool_if:NT \l__tasks_resume_bool
       { \setcounter {task} {0} }
     \int_set:Nn \l__tasks_columns_int {#2}
     % set all the items in their own coffins and join with the ground:
@@ -506,35 +489,34 @@
           \l__tasks_item_format_tl
           \l__tasks_custom_item_format_tl
       }
-    % prepare counter according to given format:  
+    % prepare counter according to given format:
     \tl_set:Nx \l__tasks_tmpa_tl
       {
-        \bool_if:NTF \l__tasks_custom_counter_format_bool
-          { \tl_to_str:V \l__tasks_custom_counter_format_tl }
-          { \tl_to_str:V \l__tasks_counter_format_tl }
+        \bool_if:NTF \l__tasks_custom_label_bool
+          { \tl_to_str:V \l__tasks_custom_label_tl }
+          { \tl_to_str:V \l__tasks_label_tl }
         }
     \tl_replace_once:Nnn \l__tasks_tmpa_tl {*} {{task}}
     \tl_set_rescan:NnV \l__tasks_tmpa_tl {} \l__tasks_tmpa_tl
-    % \tl_set_eq:NN \thetask \l__tasks_tmpa_tl
-    % \tl_put_left:Nx \thetask { \int_use:N \g__tasks_env_int . }
-    % \tl_show:N \thetask
+    \dim_compare:nNnT
+      { \l__tasks_item_indent_dim }
+      <
+      { \l__tasks_label_offset_dim + \l__tasks_label_width_dim }
+      {
+        \msg_warning:nnnx {tasks}
+          {width-too-small}
+          {item-indent}
+          { \dim_to_decimal:n { \l__tasks_label_offset_dim + \l__tasks_label_width_dim } }
+      }
     % do the tasks:
     \seq_map_inline:Nn \l__tasks_seq
       {
         \__tasks_read_item:www ##1 \q_stop
-        \bool_if:NTF \l__tasks_enumerate_bool
-          {
-            \tl_if_eq:VnT \l__tasks_tmp_label_tl { $tasks$default$label$ }
-              {
-                \refstepcounter {task}
-                \tl_set:NV \l__tasks_label_tl \l__tasks_tmpa_tl
-              }
-          }
-          {
-            \tl_if_blank:VT \l__tasks_label_tl
-              { \tl_set_eq:NN \l__tasks_label_tl \labelitemi }
-          }
-        \tl_put_left:NV \l__tasks_label_tl \l__tasks_label_format_tl
+        \refstepcounter {task}
+        \tl_set:NV \l__tasks_label_tl \l__tasks_tmpa_tl
+        \bool_if:NTF \l__tasks_custom_label_format_bool
+          { \tl_put_left:NV \l__tasks_label_tl \l__tasks_custom_label_format_tl }
+          { \tl_put_left:NV \l__tasks_label_tl \l__tasks_label_format_tl }
         % check if the label width is big enough:
         \hbox_set:NV \l__tasks_tmpa_box \l__tasks_label_tl
         \dim_compare:nNnF
@@ -542,7 +524,9 @@
           <
           { \l__tasks_label_width_dim }
           {
-            \msg_warning:nnx {tasks} {width-too-small}
+            \msg_warning:nnnx {tasks}
+              {width-too-small}
+              {label-width}
               { \dim_to_decimal:n { \box_wd:N \l__tasks_tmpa_box } }
           }
         \tl_if_eq:VnTF \l__tasks_tmp_label_tl { $tasks$default$label$ }
@@ -616,34 +600,38 @@
 
 \keys_define:nn {tasks/list}
   {
-    debug           .bool_set:N = \l__tasks_debug_bool ,
-    style           .tl_set:N   = \l__tasks_instance_tl ,
-    style           .initial:n  = alphabetize ,
-    counter-format  .code:n     =
-      \bool_set_true:N \l__tasks_custom_counter_format_bool
-      \tl_set:Nn \l__tasks_custom_counter_format_tl {#1} ,
-    label           .code:n     =
+    debug            .bool_set:N = \l__tasks_debug_bool ,
+    break-correction .dim_set:N  = \l__tasks_correction_dim ,
+    break-correction .initial:n  = .00001pt ,
+    style            .tl_set:N   = \l__tasks_instance_tl ,
+    style            .initial:n  = alphabetize ,
+    counter-format   .code:n     =
+      \msg_warning:nnnn {tasks} {option-deprecated} {counter-format} {label}
+      \keys_set:nn {tasks/list} { label = #1 } ,
+    label            .code:n     =
       \bool_set_true:N \l__tasks_custom_label_bool
       \tl_set:Nn \l__tasks_custom_label_tl {#1} ,
-    label-format    .tl_set:N   = \l__tasks_custom_label_format_tl ,
-    label-width     .code:n     =
+    label-format     .code:n     =
+      \bool_set_true:N \l__tasks_custom_label_format_bool
+      \tl_set:Nn \l__tasks_custom_label_format_tl ,
+    label-width      .code:n     =
       \dim_set:Nn \l__tasks_label_width_dim {#1}
       \bool_set_true:N \l__tasks_label_width_bool ,
-    label-offset    .code:n     =
+    label-offset     .code:n     =
       \dim_set:Nn \l__tasks_label_offset_dim {#1}
       \bool_set_true:N \l__tasks_label_offset_bool ,
-    label-align     .tl_set:N   = \l__tasks_label_align_tl ,
-    item-format     .tl_set:N   = \l__tasks_custom_item_format_tl ,
-    item-indent     .code:n     =
+    label-align      .tl_set:N   = \l__tasks_label_align_tl ,
+    item-format      .tl_set:N   = \l__tasks_custom_item_format_tl ,
+    item-indent      .code:n     =
       \dim_set:Nn \l__tasks_item_indent_dim {#1}
       \bool_set_true:N \l__tasks_item_indent_bool ,
-    column-sep      .dim_set:N  = \l__tasks_column_sep_dim ,
-    before-skip     .skip_set:N = \l__tasks_before_list_skip ,
-    after-skip      .skip_set:N = \l__tasks_after_list_skip ,
+    column-sep       .dim_set:N  = \l__tasks_column_sep_dim ,
+    before-skip      .skip_set:N = \l__tasks_before_list_skip ,
+    after-skip       .skip_set:N = \l__tasks_after_list_skip ,
     after-item-skip .code:n     =
       \bool_set_true:N \l__tasks_custom_after_item_skip_bool
       \skip_set:Nn \l__tasks_custom_after_item_skip {#1} ,
-    resume          .bool_set:N = \l__tasks_resume_bool
+    resume           .bool_set:N = \l__tasks_resume_bool
   }
 
 % --------------------------------------------------------------------------
@@ -717,13 +705,13 @@
 % ITEMIZE:
 \DeclareInstance {tasks} {itemize} {default}
   {
-    enumerate    = false ,
-    label-width  = 1.125em
+    label-width  = 1.125em ,
+    label        = \labelitemi
   }
 
 % ENUMERATE:
 \DeclareInstance {tasks} {enumerate} {default}
-  { counter-format = \arabic*. }
+  { label = \arabic*. }
 
 % --------------------------------------------------------------------------
 % setup:

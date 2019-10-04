@@ -1,7 +1,7 @@
 % --------------------------------------------------------------------------
 % the TASKS package
 % 
-%   Horizontal columned lists.
+%   horizontally columned lists
 % 
 % --------------------------------------------------------------------------
 % Clemens Niederberger
@@ -33,7 +33,7 @@
   authors  = Clemens Niederberger ,
   email    = {contact@mychemistry.eu} ,
   url      = {https://github.com/cgnieder/tasks/} ,
-  info     = {create horizontal columned lists} ,
+  info     = {horizontally columned lists} ,
   add-cmds = {
     NewTasks,
     settasks,
@@ -451,7 +451,7 @@ The separator does not have to be a control sequence:
 \begin{example}
   % preamble:
   % \usepackage{dingbat}
-  \NewTasks[label=\footnotesize\leftthumbsup,label-width=1.3em]{done}[*]
+  \NewTasks[label=\footnotesize\leftthumbsup,label-width=15pt]{done}[*]
   \begin{done}
     * First task
     * Second task
@@ -472,7 +472,7 @@ argument.
 \begin{example}
   % preamble:
   % \usepackage{dingbat}
-  \NewTasks[label=\footnotesize\leftthumbsup,label-width=1.3em]{done}[*]
+  \NewTasks[label=\footnotesize\leftthumbsup,label-width=15pt]{done}[*]
   \begin{done}(3)
     * First task
     * Second task
