@@ -233,7 +233,7 @@
       {
         \vcoffin_set:Nnn \l__tasks_tmpa_coffin
           { \l__tasks_item_width_dim }
-          { \__tasks_setup: #2 {#3} \strut }
+          { \__tasks_setup: #2 {#3} \mode_if_horizontal:T { \strut } }
         \__tasks_debug:n
           {
             \coffin_typeset:Nnnnn \l__tasks_tmpa_coffin
@@ -753,3 +753,4 @@
 2016/08/16 v0.13  - a negative value for label width will make the label
                     protrude to the margin
 2019/10/04 v1.0   - get rid of `cntformats', `environ' and `epic'
+                  - no default multiple choice any more
