@@ -532,13 +532,13 @@
 
 \cs_new_protected:Npn \__tasks_read_item:www
   {
-    \peek_meaning_remove:NTF !
+    \peek_charcode_remove:NTF !
       {
         \bool_set_true:N \l__tasks_item_full_line_bool
         \__tasks_read_item_aux:ww
       }
       {
-        \peek_meaning_remove:NTF *
+        \peek_charcode_remove:NTF *
           {
             \bool_set_true:N \l__tasks_item_rest_of_line_bool
             \__tasks_read_item_rest_of_line:ww
