@@ -25,19 +25,30 @@
 % If you have any ideas, questions, suggestions or bugs to report, please
 % feel free to contact me.
 % --------------------------------------------------------------------------
-\RequirePackage {expl3,xparse,epic,xtemplate}
+\RequirePackage {expl3,xparse,xtemplate}
 \ExplSyntaxOn
 
-\tl_const:Nn \c_tasks_name_tl    {tasks}
-\tl_const:Nn \c_tasks_date_tl    {2019/10/04}
-\tl_const:Nn \c_tasks_version_tl {1.0}
-\tl_const:Nn \c_tasks_info_tl    {Horizontal columned lists}
-  
+\tl_const:Nn \c_tasks_date_tl                 {2019/10/04}
+\tl_const:Nn \c_tasks_version_major_number_tl {1}
+\tl_const:Nn \c_tasks_version_minor_number_tl {0}
+\tl_const:Nn \c_tasks_version_subrelease_tl   {}
+\tl_const:Nx \c_tasks_version_number_tl
+  {
+    \c_tasks_version_major_number_tl .
+    \c_tasks_version_minor_number_tl
+  }
+\tl_const:Nx \c_tasks_version_tl
+  {
+    \c_tasks_version_number_tl
+    \c_tasks_version_subrelease_tl
+  }
+\tl_const:Nn \c_tasks_info_tl {Horizontally ~ columned ~ lists}
+
 \ProvidesExplPackage
-  {\c_tasks_name_tl}
+  {tasks}
   {\c_tasks_date_tl}
   {\c_tasks_version_tl}
-  {\c_tasks_info_tl \c_space_tl (CN)}
+  {\c_tasks_info_tl}
 
 % --------------------------------------------------------------------------
 % variants of kernel functions:
@@ -64,6 +75,7 @@
 \int_new:N    \g__tasks_current_col_num_int
 \int_new:N    \g__tasks_current_row_num_int
 \int_new:N    \l__tasks_item_columns_int
+\int_new:N    \g__tasks_env_int
 
 \bool_new:N   \l__tasks_enumerate_bool
 \bool_new:N   \l__tasks_resume_bool
@@ -113,7 +125,7 @@
 \coffin_new:N \l__tasks_label_coffin
 
 \newcounter {task}
-\tl_set:Nn \thetask { \alph {task} ) }
+% \tl_set:Nn \thetask { \alph {task} ) }
 
 % temporary variables:
 \int_new:N    \l__tasks_tmpa_int
@@ -503,6 +515,9 @@
         }
     \tl_replace_once:Nnn \l__tasks_tmpa_tl {*} {{task}}
     \tl_set_rescan:NnV \l__tasks_tmpa_tl {} \l__tasks_tmpa_tl
+    % \tl_set_eq:NN \thetask \l__tasks_tmpa_tl
+    % \tl_put_left:Nx \thetask { \int_use:N \g__tasks_env_int . }
+    % \tl_show:N \thetask
     % do the tasks:
     \seq_map_inline:Nn \l__tasks_seq
       {
@@ -635,6 +650,7 @@
 
 \cs_new_protected:Npn \tasks_body:nnnn #1#2#3#4
   {
+    \int_gincr:N \g__tasks_env_int
     \legacy_if:nT {@inlabel}
       {
         \noindent\par
@@ -722,6 +738,13 @@
   
 % --------------------------------------------------------------------------
 \file_if_exist:nT {tasks.cfg} { \file_input:n {tasks.cfg} }
+
+\AtBeginDocument
+  {
+    \@ifpackageloaded {hyperref}
+      { \tl_set:Nn \theHtask { \int_use:N \g__tasks_env_int . \thetask } }
+      {}
+  }
 
 \file_input_stop:
 % --------------------------------------------------------------------------

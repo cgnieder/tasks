@@ -8,7 +8,7 @@
 % Web:    https://github.com/cgnieder/tasks/
 % E-Mail: contact@mychemistry.eu
 % --------------------------------------------------------------------------
-% Copyright 2013-2014 Clemens Niederberger
+% Copyright 2013--2019 Clemens Niederberger
 % 
 % This work may be distributed and/or modified under the
 % conditions of the LaTeX Project Public License, either version 1.3
@@ -35,29 +35,25 @@
   url      = {https://github.com/cgnieder/tasks/} ,
   info     = {create horizontal columned lists} ,
   add-cmds = {
-    checkedchoicebox ,
-    choicebox,
     NewTasks,
     settasks,
     startnewitemline ,
     task
   } ,
   add-silent-cmds = {
-    choice, correct,
     DeclareInstance, DeclareTemplateInterface,
     leftthumbsup,
-    sample, Sample
+    sample, Sample , theexercise
   }
 }
 
-\BeforeBeginEnvironment{example}{\vspace{\baselineskip}}
-\AfterEndEnvironment{example}{\vspace{\baselineskip}}
-\BeforeBeginEnvironment{sourcecode}{\vspace{\baselineskip}}
-\AfterEndEnvironment{sourcecode}{\vspace{\baselineskip}}
+% \BeforeBeginEnvironment{example}{\vspace{\baselineskip}}
+% \AfterEndEnvironment{example}{\vspace{\baselineskip}}
+% \BeforeBeginEnvironment{sourcecode}{\vspace{\baselineskip}}
+% \AfterEndEnvironment{sourcecode}{\vspace{\baselineskip}}
 
 \newpackagename\ExSheets{ExSheets}
-\newpackagename\ExSheetslistings{ExSheets-listings}
-\newpackagename\cntformats{cntformats}
+\newpackagename\xsim{xsim}
 \newpackagename\Tasks{tasks}
 
 % ----------------------------------------------------------------------------
@@ -75,15 +71,10 @@
 \usepackage{filecontents}
 \usepackage{csquotes}
 
-
-
 % ----------------------------------------------------------------------------
 % example definitions that have to be done in the preamble:
-\usepackage{exsheets}
+\usepackage{xsim}
 \usepackage{dingbat}
-\NewTasks[style=multiplechoice]{multiplechoice}[\choice](3)
-\newcommand*\correct{\PrintSolutionsTF{\checkedchoicebox}{\choicebox}}
-
 
 \newcommand*\sample{This is some sample text we will use to create a somewhat
   longer text spanning a few lines.}
@@ -113,10 +104,10 @@ customization.
 \license
 
 \Tasks\ requires the \bnd{l3kernel}~\cite{bnd:l3kernel} bundle,
-\needpackage{xparse}, \pkg{xtemplate} and \needpackage{l3keys2e} which are
-part of the \bnd{l3packages}~\cite{bnd:l3packages} bundle,
-\pkg{epic}~\cite{pkg:epic}, \pkg{cntformats}~\cite{pkg:cntformats}, and
-\pkg{environ}~\cite{pkg:environ}.
+\needpackage{xparse} and \pkg{xtemplate}.%  and \needpackage{l3keys2e} which are
+% part of the \bnd{l3packages}~\cite{bnd:l3packages} bundle,
+% \pkg{epic}~\cite{pkg:epic}, \pkg{cntformats}~\cite{pkg:cntformats}, and
+% \pkg{environ}~\cite{pkg:environ}.
 
 
 \section{How it works}
@@ -272,12 +263,10 @@ following ones that can be set using a setup command:
   \keyval{style}{instance}\Default
      Choose the instance to be used.  Read more on this in
      section~\ref{sec:tasks}.
-  \keyval{counter-format}{counter specs}\Default{tsk[a])}
-    \sinceversion{0.9}Sets a custom label.  The letters \code{tsk} are
-    replaced with the task-counter.  An optional argument directly following
-    these letters specifies the counter format: \code{1}: \cs*{arabic},
-    \code{a}: \cs*{alph}, \code{A}: \cs*{Alph}, \code{r}: \cs*{roman} and
-    \code{R}: \cs*{Roman}.
+  \keyval{counter-format}{counter specs}\Default{\cs*{alph}\code{*)}}
+    \changedversion{1.0}Sets a custom label.  The \code{*} is replaced by
+    \Marg{task}.  This is heavily inspired by
+    \pkg{enumitem}'s~\cite{pkg:enumitem} \code{label} option.
   \keyval{label-format}{code}\Default
     \changedversion{0.9}Can be used to apply a formatting like, \eg,
     \cs*{bfseries} to the labels.
@@ -353,7 +342,7 @@ following ones that can be set using a setup command:
 
 Now the same list as above but with three columns and a different label:
 \begin{example}
-  \begin{tasks}[counter-format=(tsk[r]),label-width=4ex](2)
+  \begin{tasks}[counter-format=(\roman*),label-width=4ex](2)
     \task \Sample
     \task \sample\ \sample
     \task \sample
@@ -361,7 +350,7 @@ Now the same list as above but with three columns and a different label:
     \task \sample\par\sample
   \end{tasks}
 \end{example}
-% \begin{tasks}[counter-format=(tsk[r]),label-width=4ex](3)
+% \begin{tasks}[counter-format=(\roman*),label-width=4ex](3)
 %  \task \Sample
 %  \task \sample\ \sample
 %  \task \sample
@@ -369,24 +358,24 @@ Now the same list as above but with three columns and a different label:
 %  \task \sample\par\sample
 % \end{tasks}
 
-Let's use it inside a question, \ie, inside \ExSheets' \env{question}
+Let's use it inside a question, \ie, inside \xsim's \env{exercise}
 environment:
 \begin{example}
   % since settings are local the following ones will be lost
   % outside this example;
   \settasks{
-    counter-format = qu.tsk ,
+    counter-format = \theexercise.\arabic* ,
     item-indent    = 2em ,
     label-width    = 2em ,
     label-offset   = 0pt
   }
-  \begin{question}[type=exam]{4}
+  \begin{exercise}
     I have these two tasks for you. Shall we begin?
     \begin{tasks}(2)
       \task The first task: easy!
       \task The second task: even more so!
     \end{tasks}
-  \end{question}
+  \end{exercise}
   \begin{solution}[print]
     Now, let's see\ldots\ ah, yes:
     \begin{tasks}
@@ -412,7 +401,7 @@ available:
 \begin{description}
   \item[itemize] uses \cs*{labelitemi} as labels.
   \item[enumerate] enumerates the items with 1., 2., \ldots
-  \item[multiplechoice] a --~well~-- `multiple choice' list.
+  % \item[multiplechoice] a --~well~-- `multiple choice' list.
 \end{description}
 \begin{example}
   \begin{tasks}[style=itemize](2)
@@ -423,11 +412,11 @@ available:
     \task that's just how\ldots
     \task \ldots we expected
   \end{tasks}
-  \begin{tasks}[style=multiplechoice](2)
-    \task that's just how\ldots
-    \task \ldots we expected
-  \end{tasks}
 \end{example}
+  % \begin{tasks}[style=multiplechoice](2)
+  %   \task that's just how\ldots
+  %   \task \ldots we expected
+  % \end{tasks}
 
 \section{Custom Labels}
 If you want to change a single label inside a list, you can use the optional
@@ -492,43 +481,42 @@ argument.
   \end{done}
 \end{example}
 
-Let's say you want a \env*{multiplechoice} environment that has three columns
-in its default state.  You could do something like this:
-\begin{example}
-  % preamble:
-  % \NewTasks[style=multiplechoice]{multiplechoice}[\choice](3)
-  % \newcommand*\correct{\PrintSolutionsTF{\checkedchoicebox}{\choicebox}}
-  %
-  % \PrintSolutionsTF and the {question} environment are provided
-  % by the ExSheets package
-  \begin{question}
-    \begin{multiplechoice}
-      \choice First choice
-      \choice Second choice
-      \choice[\correct] Third choice
-    \end{multiplechoice}
-  \end{question}
-  \begin{solution}[print]
-    \begin{multiplechoice}
-      \choice First choice
-      \choice Second choice
-      \choice[\correct] Third choice
-    \end{multiplechoice}
-  \end{solution}
-\end{example}
+% Let's say you want a \env*{multiplechoice} environment that has three columns
+% in its default state.  You could do something like this:
+% \begin{example}
+%   % preamble:
+%   % \NewTasks[style=multiplechoice]{multiplechoice}[\choice](3)
+%   % \newcommand*\correct{\PrintSolutionsTF{\checkedchoicebox}{\choicebox}}
+%   %
+%   % \PrintSolutionsTF and the {question} environment are provided
+%   % by the ExSheets package
+%   \begin{question}
+%     \begin{multiplechoice}
+%       \choice First choice
+%       \choice Second choice
+%       \choice[\correct] Third choice
+%     \end{multiplechoice}
+%   \end{question}
+%   \begin{solution}[print]
+%     \begin{multiplechoice}
+%       \choice First choice
+%       \choice Second choice
+%       \choice[\correct] Third choice
+%     \end{multiplechoice}
+%   \end{solution}
+% \end{example}
 
-The last example shows you two additional commands:
-\begin{commands}
-  \command{choicebox}[\quad\choicebox]
-    Print an empty square.
-  \command{checkedchoicebox}[\quad\checkedchoicebox]
-    Print a crossed-out square.
-\end{commands}
+% The last example shows you two additional commands:
+% \begin{commands}
+%   \command{choicebox}[\quad\choicebox]
+%     Print an empty square.
+%   \command{checkedchoicebox}[\quad\checkedchoicebox]
+%     Print a crossed-out square.
+% \end{commands}
 
 
 \section{Styling \Tasks}
-Equivalent to the styling of \ExSheets\ \Tasks\ uses \pkg{xtemplate} to
-declare additional instances for the lists.
+\Tasks\ uses \pkg{xtemplate} to declare additional instances for the lists.
 
 \subsection{The \code{tasks} Object}\label{sec:tasks}
 The object that's defined by \Tasks\ is the `tasks' object.  This time there
@@ -547,7 +535,7 @@ of their usage.
       enumerate       : boolean   = true    ,
       label           : tokenlist           ,
       indent          : length    = 2.5em   ,
-      counter-format  : tokenlist = tsk[a]) ,
+      counter-format  : tokenlist = \alph*) ,
       label-format    : tokenlist           ,
       label-width     : length    = 1em     ,
       label-offset    : length    = .3333em ,
@@ -569,13 +557,13 @@ This is rather brief this time:
     }
   % ENUMERATE:
   \DeclareInstance{tasks}{enumerate}{default}
-    { counter-format = tsk. }
-  % MULTIPLECHOICE:
-  \DeclareInstance{tasks}{multiplechoice}{default}
-    {
-      enumerate = false       ,
-      label     = \choicebox  ,
-    }
+    { counter-format = \arabic*. }
 \end{sourcecode}
+% % MULTIPLECHOICE:
+% \DeclareInstance{tasks}{multiplechoice}{default}
+%   {
+%     enumerate = false       ,
+%     label     = \choicebox  ,
+%   }
 
 \end{document}
