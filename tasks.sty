@@ -251,9 +251,10 @@
           }
           {
             \noindent
-            \tl_use:N \l__tasks_item_fill_left_tl
-            \strut #1
-            \tl_use:N \l__tasks_item_fill_right_tl
+            \l__tasks_item_fill_left_tl
+            #1
+            \l__tasks_item_fill_right_tl
+            \strut
           }
         \__tasks_debug:n
           {
