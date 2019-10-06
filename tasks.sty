@@ -31,7 +31,7 @@
 \tl_const:Nn \c_tasks_date_tl                 {2019/10/06}
 \tl_const:Nn \c_tasks_version_major_number_tl {1}
 \tl_const:Nn \c_tasks_version_minor_number_tl {0}
-\tl_const:Nn \c_tasks_version_subrelease_tl   {b}
+\tl_const:Nn \c_tasks_version_subrelease_tl   {c}
 \tl_const:Nx \c_tasks_version_number_tl
   {
     \c_tasks_version_major_number_tl .
@@ -527,9 +527,9 @@
           { \tl_put_left:NV \l__tasks_label_tl \l__tasks_label_format_tl }
         % check if the label width is big enough:
         \hbox_set:NV \l__tasks_tmpa_box \l__tasks_label_tl
-        \dim_compare:nNnF
+        \dim_compare:nNnT
           { \box_wd:N \l__tasks_tmpa_box }
-          <
+          >
           { \l__tasks_label_width_dim }
           {
             \msg_warning:nnnx {tasks}
@@ -610,9 +610,8 @@
     style            .tl_set:N   = \l__tasks_instance_tl ,
     style            .initial:n  = alphabetize ,
     counter-format   .code:n     =
-      \msg_warning:nnnnn {tasks} {deprecated} {option} {counter-format}
-      {label} ,
-      % \keys_set:nn {tasks/list} { label = #1 } ,
+      \msg_warning:nnnnn {tasks} {deprecated} {option} {counter-format} {label}
+      \keys_set:nn {tasks/list} { label = #1 } ,
     label            .code:n     =
       \bool_set_true:N \l__tasks_custom_label_bool
       \tl_set:Nn \l__tasks_custom_label_tl {#1} ,
@@ -808,3 +807,5 @@
                   - the option `counter-format' is deprecated
 2019/10/05 v1.0a  - fix small bug in deprecation message
 2019/10/06 v1.0b  - fix bug in `label-format' definition
+2019/10/06 v1.0c  - fix bug in width warning
+                  - fix bug in deprecation of `counter-format'
