@@ -28,10 +28,10 @@
 \RequirePackage {expl3,xparse,xtemplate}
 \ExplSyntaxOn
 
-\tl_const:Nn \c_tasks_date_tl                 {2019/10/05}
+\tl_const:Nn \c_tasks_date_tl                 {2019/10/06}
 \tl_const:Nn \c_tasks_version_major_number_tl {1}
 \tl_const:Nn \c_tasks_version_minor_number_tl {0}
-\tl_const:Nn \c_tasks_version_subrelease_tl   {a}
+\tl_const:Nn \c_tasks_version_subrelease_tl   {b}
 \tl_const:Nx \c_tasks_version_number_tl
   {
     \c_tasks_version_major_number_tl .
@@ -610,14 +610,15 @@
     style            .tl_set:N   = \l__tasks_instance_tl ,
     style            .initial:n  = alphabetize ,
     counter-format   .code:n     =
-      \msg_warning:nnnnn {tasks} {deprecated} {option} {counter-format} {label}
-      \keys_set:nn {tasks/list} { label = #1 } ,
+      \msg_warning:nnnnn {tasks} {deprecated} {option} {counter-format}
+      {label} ,
+      % \keys_set:nn {tasks/list} { label = #1 } ,
     label            .code:n     =
       \bool_set_true:N \l__tasks_custom_label_bool
       \tl_set:Nn \l__tasks_custom_label_tl {#1} ,
     label-format     .code:n     =
       \bool_set_true:N \l__tasks_custom_label_format_bool
-      \tl_set:Nn \l__tasks_custom_label_format_tl ,
+      \tl_set:Nn \l__tasks_custom_label_format_tl {#1} ,
     label-width      .code:n     =
       \dim_set:Nn \l__tasks_label_width_dim {#1}
       \bool_set_true:N \l__tasks_label_width_bool ,
@@ -806,3 +807,4 @@
                   - rename \NewTasks and \RenewTasks
                   - the option `counter-format' is deprecated
 2019/10/05 v1.0a  - fix small bug in deprecation message
+2019/10/06 v1.0b  - fix bug in `label-format' definition
