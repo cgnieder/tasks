@@ -311,6 +311,9 @@ following ones that can be set using a setup command:
     The enumeration will resume from a previous \env{tasks} environment.  In
     order to use this option properly you shouldn't mix different \env{tasks}
     environments that both count their items.
+  \keyval{start}{integer}\Default{1}
+    \sinceversion{1.1}Set the starting value with which the list starts
+    counting.
   \keybool{debug}\Default{false}
     \sinceversion{0.10}If set to true \cs*{fboxsep} is set to \code{0pt}
     inside the \env{tasks} environment and \cs*{fbox} is used to draw a frame

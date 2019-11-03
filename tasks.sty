@@ -28,10 +28,10 @@
 \RequirePackage {expl3,xparse,xtemplate}
 \ExplSyntaxOn
 
-\tl_const:Nn \c_tasks_date_tl                 {2019/??/??}
+\tl_const:Nn \c_tasks_date_tl                 {2019/11/03}
 \tl_const:Nn \c_tasks_version_major_number_tl {1}
-\tl_const:Nn \c_tasks_version_minor_number_tl {0}
-\tl_const:Nn \c_tasks_version_subrelease_tl   {e}
+\tl_const:Nn \c_tasks_version_minor_number_tl {1}
+\tl_const:Nn \c_tasks_version_subrelease_tl   {}
 \tl_const:Nx \c_tasks_version_number_tl
   {
     \c_tasks_version_major_number_tl .
@@ -100,6 +100,7 @@
 \int_new:N    \g__tasks_current_row_num_int
 \int_new:N    \l__tasks_item_columns_int
 \int_new:N    \g__tasks_env_int
+\int_new:N    \l__tasks_start_int
 
 \bool_new:N   \l__tasks_resume_bool
 \bool_new:N   \l__tasks_load_tasks_bool
@@ -481,7 +482,7 @@
     \__tasks_label_align:V \l__tasks_label_align_tl
     % need this for enumerate list:
     \bool_if:NF \l__tasks_resume_bool
-      { \setcounter {task} {0} }
+      { \setcounter {task} { \int_eval:n { \l__tasks_start_int -1 } } }
     \int_set:Nn \l__tasks_columns_int {#2}
     % set all the items in their own coffins and join with the ground:
     \int_gzero:N \g__tasks_current_col_num_int
@@ -643,7 +644,9 @@
     after-item-skip .code:n     =
       \bool_set_true:N \l__tasks_custom_after_item_skip_bool
       \skip_set:Nn \l__tasks_custom_after_item_skip {#1} ,
-    resume           .bool_set:N = \l__tasks_resume_bool
+    resume           .bool_set:N = \l__tasks_resume_bool ,
+    start            .int_set:N  = \l__tasks_start_int ,
+    start            .initial:n  = 1
   }
 
 % --------------------------------------------------------------------------
@@ -737,7 +740,7 @@
 \cs_new_protected:Npn \tasks_setup:n #1
   { \keys_set:nn {tasks/list} {#1} }
 
-\NewDocumentCommand \settasks { m }
+\NewDocumentCommand \settasks { +m }
   { \tasks_setup:n {#1} }
 
 % default:
@@ -765,11 +768,12 @@
                      * the former `label-format' is now `counter-format'
                      * new: `label-format'
                   - changed defaults for `label-width' and `label-offset'
-                  - ensure that the `after-item-skip' is only
-                          inserted in between rows
+                  - ensure that the `after-item-skip' is only inserted in
+                    between rows
                   - new option `after-item-skip'
                   - improvements when label are set with optional argument:
-                     * a provided but empty argument is now correctly recognized
+                     * a provided but empty argument is now correctly
+                       recognized
                      * the counter is  _not_ stepped anymore for enumerated
                        lists when the optional argument is provided
                   - new command \startnewitemline that forces the next item to
@@ -818,4 +822,6 @@
 2019/10/07 v1.0c  - fix bug in width warning
                   - fix bug in deprecation of `counter-format'
 2019/10/08 v1.0d  - make \thetask usable; and correct \label/\ref
-2019/??/?? v1.0e  - fix typo                  
+2019/11/03 v1.1   - fix typo
+                  - make \settasks' argument long
+                  - new option `start'
