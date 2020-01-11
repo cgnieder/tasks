@@ -8,7 +8,7 @@
 % Web:    https://github.com/cgnieder/tasks/
 % E-Mail: contact@mychemistry.eu
 % --------------------------------------------------------------------------
-% Copyright 2013--2019 Clemens Niederberger
+% Copyright 2013--2020 Clemens Niederberger
 % 
 % This work may be distributed and/or modified under the
 % conditions of the LaTeX Project Public License, either version 1.3
@@ -28,10 +28,10 @@
 \RequirePackage {expl3,xparse,xtemplate}
 \ExplSyntaxOn
 
-\tl_const:Nn \c_tasks_date_tl                 {2019/11/03}
+\tl_const:Nn \c_tasks_date_tl                 {2020/01/11}
 \tl_const:Nn \c_tasks_version_major_number_tl {1}
 \tl_const:Nn \c_tasks_version_minor_number_tl {1}
-\tl_const:Nn \c_tasks_version_subrelease_tl   {}
+\tl_const:Nn \c_tasks_version_subrelease_tl   {a}
 \tl_const:Nx \c_tasks_version_number_tl
   {
     \c_tasks_version_major_number_tl .
@@ -63,13 +63,13 @@
 \msg_new:nnn {tasks} {width-too-small}
   {
     The~ width~ of~ `#1'~ is~ too~ small~ \msg_line_context: .~
-    Please~ set~ it~ at~ least~ to~ #2.
+    Please~ set~ it~ at~ least~ to~ #2 pt.
   }
 
 \msg_new:nnn {tasks} {no-item}
   {
     You've~ placed~ `#1'~ before~ the~ first~ #2~ \msg_line_context: .~
-    I~ will~ through~ it~ away~ and~ ignore~ it~ for~ the~ rest~ of~ the~
+    I~ will~ throw~ it~ away~ and~ ignore~ it~ for~ the~ rest~ of~ the~
     list.
   }
 
@@ -530,7 +530,7 @@
       {
         \__tasks_read_item:www ##1 \q_stop
         \refstepcounter {task}
-        \tl_set:NV \l__tasks_label_tl \l__tasks_tmpa_tl
+        \tl_set:Nx \l__tasks_label_tl { { \exp_not:V \l__tasks_tmpa_tl } }
         \bool_if:NTF \l__tasks_custom_label_format_bool
           { \tl_put_left:NV \l__tasks_label_tl \l__tasks_custom_label_format_tl }
           { \tl_put_left:NV \l__tasks_label_tl \l__tasks_label_format_tl }
@@ -602,9 +602,12 @@
   
 \cs_new_protected:Npn \__tasks_read_item_aux_ii:ww [#1]#2 \q_stop
   {
-    \tl_set:Nn \l__tasks_tmp_label_tl {#1}
-    \tl_if_eq:nnF {#1} { $tasks$default$label$ }
-      { \tl_put_left:NV \l__tasks_tmp_label_tl \l__tasks_label_format_tl }
+    \tl_if_eq:nnTF {#1} {$tasks$default$label$}
+      { \tl_set:Nn \l__tasks_tmp_label_tl {#1} }
+      {
+        \tl_set:Nn \l__tasks_tmp_label_tl {{#1}}
+        \tl_put_left:NV \l__tasks_tmp_label_tl \l__tasks_label_format_tl
+      }
     \tl_set:Nx \l__tasks_item_tl { \tl_trim_spaces:n {#2} }
   }
 
@@ -825,3 +828,5 @@
 2019/11/03 v1.1   - fix typo
                   - make \settasks' argument long
                   - new option `start'
+2020/01/11 v1.2   - allow `label-format' to end with command that needs an
+                    argument

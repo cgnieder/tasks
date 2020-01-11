@@ -8,7 +8,7 @@
 % Web:    https://github.com/cgnieder/tasks/
 % E-Mail: contact@mychemistry.eu
 % --------------------------------------------------------------------------
-% Copyright 2013--2019 Clemens Niederberger
+% Copyright 2013--2020 Clemens Niederberger
 % 
 % This work may be distributed and/or modified under the
 % conditions of the LaTeX Project Public License, either version 1.3
@@ -270,8 +270,9 @@ following ones that can be set using a setup command:
      Choose the instance to be used.  Read more on this in
      section~\ref{sec:tasks}.
   \keyval{label-format}{code}\Default
-    \changedversion{0.9}Can be used to apply a formatting like, \eg,
-    \cs*{bfseries} to the labels.
+    \changedversion{1.1a}Can be used to apply a formatting like, \eg,
+    \cs*{bfseries} to the labels.  This may be code accepting the item as
+    mandatory argument.
   \keyval{label}{code}\Default{\cs*{alph}\code{*)}}
     \changedversion{1.0}Sets a custom label.  The \code{*} is replaced by
     \Marg{task}.  This is heavily inspired by
@@ -283,7 +284,7 @@ following ones that can be set using a setup command:
     item.
   \keyval{item-format}{code}\Default
     \sinceversion{0.11}Can be used to apply a formatting like, \eg,
-    \cs*{bfseries} to the items. This may be a macro accepting the item as
+    \cs*{bfseries} to the items. This may be code accepting the item as
     mandatory argument.
   \keyval{item-indent}{dim}\Default{2.5em}
     \sinceversion{0.9a}The indent of an item, \ie, the horizontal space
@@ -341,7 +342,7 @@ following ones that can be set using a setup command:
     \draw[<->] (0,-.5) --node[below]{item indent} (2,-.5) ;
     \draw[<->] (2,-.5) --node[below]{item width} (10,-.5) ;
     \draw[<->] (labeledge1) ++(0,1) --node[above]{label width} ++(-1,0) ;
-    \draw[<->] (labeledge1) --node[above]{item offset} ++(.5,0) ;
+    \draw[<->] (labeledge1) --node[above]{label offset} ++(.5,0) ;
   \end{tikzpicture}
   \caption{A visual representation of the used lengths.}
   \label{fig:lengths}
