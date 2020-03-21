@@ -1,7 +1,7 @@
 % --------------------------------------------------------------------------
 % the TASKS package
 % 
-%   horizontally columned lists
+%   lists with columns filled horizontally
 % 
 % --------------------------------------------------------------------------
 % Clemens Niederberger
@@ -28,10 +28,10 @@
 \RequirePackage {expl3,xparse,xtemplate}
 \ExplSyntaxOn
 
-\tl_const:Nn \c_tasks_date_tl                 {2020/01/11}
+\tl_const:Nn \c_tasks_date_tl                 {2020/03/21}
 \tl_const:Nn \c_tasks_version_major_number_tl {1}
-\tl_const:Nn \c_tasks_version_minor_number_tl {1}
-\tl_const:Nn \c_tasks_version_subrelease_tl   {a}
+\tl_const:Nn \c_tasks_version_minor_number_tl {2}
+\tl_const:Nn \c_tasks_version_subrelease_tl   {}
 \tl_const:Nx \c_tasks_version_number_tl
   {
     \c_tasks_version_major_number_tl .
@@ -42,7 +42,7 @@
     \c_tasks_version_number_tl
     \c_tasks_version_subrelease_tl
   }
-\tl_const:Nn \c_tasks_info_tl {horizontally ~ columned ~ lists}
+\tl_const:Nn \c_tasks_info_tl {lists~ with~ columns~ filled~ horizontally}
 
 \ProvidesExplPackage
   {tasks}
@@ -56,8 +56,10 @@
 \cs_generate_variant:Nn \tl_if_eq:nnT  {V}
 \cs_generate_variant:Nn \coffin_attach:NnnNnnnn {NnnNx}
 \cs_generate_variant:Nn \tl_set_rescan:Nnn {NnV}
+\cs_generate_variant:Nn \tl_set:Nn {cV}
 \cs_generate_variant:Nn \hbox_set:Nn {NV}
 \cs_generate_variant:Nn \msg_warning:nnnn {nnV,nnnx}
+\cs_generate_variant:Nn \tl_replace_once:Nnn {Nne}
 
 % --------------------------------------------------------------------------
 \msg_new:nnn {tasks} {width-too-small}
@@ -68,9 +70,10 @@
 
 \msg_new:nnn {tasks} {no-item}
   {
-    You've~ placed~ `#1'~ before~ the~ first~ #2~ \msg_line_context: .~
-    I~ will~ throw~ it~ away~ and~ ignore~ it~ for~ the~ rest~ of~ the~
-    list.
+    You've~ placed \\ \\
+    #1 \\ \\
+    before~ the~ first~ #2~ \msg_line_context: .~ I~ will~ throw~ it~ away~
+    and~ ignore~ it~ for~ the~ rest~ of~ the~ list.
   }
 
 \msg_new:nnn {tasks} {deprecated}
@@ -113,12 +116,14 @@
 \bool_new:N   \l__tasks_debug_bool
 \bool_new:N   \l__tasks_item_full_line_bool
 \bool_new:N   \l__tasks_item_rest_of_line_bool
+\bool_new:N   \l__tasks_measuring_bool
 
 \tl_new:N     \l__tasks_instance_tl
 \tl_new:N     \l__tasks_label_tl
 \tl_new:N     \l__tasks_custom_label_tl
 \tl_new:N     \l__tasks_label_format_tl
 \tl_new:N     \l__tasks_custom_label_format_tl
+\tl_new:N     \l__tasks_counter_tl
 \tl_new:N     \l__tasks_item_format_tl
 \tl_new:N     \l__tasks_custom_item_format_tl
 \tl_new:N     \l__tasks_item_fill_left_tl
@@ -163,6 +168,22 @@
       { \fbox {#1} }
       { \use:n {#1} }
   }
+
+\prg_new_conditional:Npnn \tasks_if_measuring: {p,T,F,TF}
+  {
+    \bool_if:NTF \l__tasks_measuring_bool
+      { \prg_return_true: }
+      { \prg_return_false: }
+  }
+
+\DeclareExpandableDocumentCommand \tasksifmeasuringTF {+m+m}
+  { \tasks_if_measuring:TF {#1} {#2} }
+
+\DeclareExpandableDocumentCommand \tasksifmeasuringT {+m}
+  { \tasks_if_measuring:T {#1} }
+
+\DeclareExpandableDocumentCommand \tasksifmeasuringF {+m}
+  { \tasks_if_measuring:F {#1} }
 
 % --------------------------------------------------------------------------
 %  #1: instance
@@ -256,11 +277,9 @@
               { \l__tasks_tmpa_int } > { \l__tasks_item_columns_int }
               { \int_set_eq:NN \l__tasks_tmpa_int \l__tasks_item_columns_int }
               { \int_zero:N \l__tasks_item_columns_int }
-            \bool_if:nT
-              {
-                \l__tasks_item_rest_of_line_bool &&
-                !\int_compare_p:nNn { \l__tasks_item_columns_int } = {0}
-              }
+            \bool_lazy_and:nnT
+              { \l__tasks_item_rest_of_line_bool }
+              { !\int_compare_p:nNn { \l__tasks_item_columns_int } = {0} }
               {
                 \int_gadd:Nn \g__tasks_current_col_num_int
                   { \l__tasks_item_columns_int -1  }
@@ -283,7 +302,10 @@
       {
         \vcoffin_set:Nnn \l__tasks_tmpa_coffin
           { \l__tasks_item_width_dim }
-          { \__tasks_setup: #2 {#3} \mode_if_horizontal:T { \strut } }
+          {
+            \__tasks_setup:
+            #2 { #3 \mode_if_horizontal:T { \strut } }
+          }
         \__tasks_debug:n
           {
             \coffin_typeset:Nnnnn \l__tasks_tmpa_coffin
@@ -338,18 +360,13 @@
     \noindent
     \skip_horizontal:N \l__tasks_item_indent_dim
     % typeset the item (with the attached label protruding to the left):
-    \coffin_typeset:Nnnnn \l__tasks_item_coffin
-      {l}
-      {T}
-      {0pt}
-      {0pt}
-    \bool_if:nT
+    \coffin_typeset:Nnnnn \l__tasks_item_coffin {l} {T} {0pt} {0pt}
+    \bool_lazy_or:nnT
+      { \l__tasks_item_full_line_bool }
       {
-        \l__tasks_item_full_line_bool ||
-        (
-          \l__tasks_item_rest_of_line_bool &&
-          \int_compare_p:nNn { \l__tasks_item_columns_int } = {0}
-        )
+        \bool_lazy_and_p:nn
+          { \l__tasks_item_rest_of_line_bool }
+          { \int_compare_p:nNn { \l__tasks_item_columns_int } = {0} }
       }
       { \tasks_new_row: }
     % are we between items in a row? Then skip by \l__tasks_column_sep_dim :
@@ -358,12 +375,9 @@
       { \skip_horizontal:N \l__tasks_column_sep_dim }
     % if we ended a row and a new row is still to come skip vertically by
     % \l__tasks_after_item_skip :
-    \bool_if:nT
-      {
-        ( \int_compare_p:nNn { \g__tasks_current_col_num_int } = { \l__tasks_columns_int } )
-        &&
-        ( \int_compare_p:n { \g__tasks_current_row_num_int != \g__tasks_rows_int } )
-      }
+    \bool_lazy_and:nnT
+      { \int_compare_p:nNn { \g__tasks_current_col_num_int } = { \l__tasks_columns_int } }
+      { \int_compare_p:n { \g__tasks_current_row_num_int != \g__tasks_rows_int } }
       { \skip_vertical:N \l__tasks_after_item_skip }
     % clean up:
     \coffin_clear:N \l__tasks_item_coffin
@@ -429,10 +443,10 @@
   {
     label           : tokenlist   = \alph*) ,
     indent          : length      = 2.5em   ,
-    label-format    : tokenlist ,
+    label-format    : tokenlist             ,
     label-width     : length      = 11pt    ,
     label-offset    : length      = .3333em ,
-    item-format     : tokenlist ,
+    item-format     : tokenlist             ,
     after-item-skip : skip        = 1ex plus 1ex minus 1ex
   }
 
@@ -482,7 +496,11 @@
     \__tasks_label_align:V \l__tasks_label_align_tl
     % need this for enumerate list:
     \bool_if:NF \l__tasks_resume_bool
-      { \setcounter {task} { \int_eval:n { \l__tasks_start_int -1 } } }
+      {
+        \setcounter
+          { \l__tasks_counter_tl }
+          { \int_eval:n { \l__tasks_start_int -1 } }
+      }
     \int_set:Nn \l__tasks_columns_int {#2}
     % set all the items in their own coffins and join with the ground:
     \int_gzero:N \g__tasks_current_col_num_int
@@ -509,12 +527,12 @@
     \bool_set_false:N \l__tasks_tmpa_bool
     \tl_if_in:NnT \l__tasks_tmpa_tl {*}
       {
-        \tl_replace_once:Nnn \l__tasks_tmpa_tl {*} {{task}}
+        \tl_replace_once:Nne \l__tasks_tmpa_tl {*} {{ \l__tasks_counter_tl }}
         \bool_set_true:N \l__tasks_tmpa_bool
       }
     \tl_set_rescan:NnV \l__tasks_tmpa_tl {} \l__tasks_tmpa_tl
     \bool_if:NT \l__tasks_tmpa_bool
-      { \tl_set:NV \thetask \l__tasks_tmpa_tl }
+      { \tl_set:cV { the \l__tasks_counter_tl } \l__tasks_tmpa_tl }
     \dim_compare:nNnT
       { \l__tasks_item_indent_dim }
       <
@@ -529,12 +547,13 @@
     \seq_map_inline:Nn \l__tasks_seq
       {
         \__tasks_read_item:www ##1 \q_stop
-        \refstepcounter {task}
+        \refstepcounter { \l__tasks_counter_tl }
         \tl_set:Nx \l__tasks_label_tl { { \exp_not:V \l__tasks_tmpa_tl } }
         \bool_if:NTF \l__tasks_custom_label_format_bool
           { \tl_put_left:NV \l__tasks_label_tl \l__tasks_custom_label_format_tl }
           { \tl_put_left:NV \l__tasks_label_tl \l__tasks_label_format_tl }
         % check if the label width is big enough:
+        \bool_set_true:N \l__tasks_measuring_bool
         \hbox_set:NV \l__tasks_tmpa_box \l__tasks_label_tl
         \dim_compare:nNnT
           { \box_wd:N \l__tasks_tmpa_box }
@@ -546,6 +565,7 @@
               {label-width}
               { \dim_to_decimal:n { \box_wd:N \l__tasks_tmpa_box } }
           }
+        \bool_set_false:N \l__tasks_measuring_bool
         \tl_if_eq:VnTF \l__tasks_tmp_label_tl { $tasks$default$label$ }
           {
             \__tasks_task:VVV
@@ -624,6 +644,8 @@
     counter-format   .code:n     =
       \msg_warning:nnnnn {tasks} {deprecated} {option} {counter-format} {label}
       \keys_set:nn {tasks/list} { label = #1 } ,
+    counter          .tl_set:N   = \l__tasks_counter_tl ,
+    counter          .initial:n  = task ,
     label            .code:n     =
       \bool_set_true:N \l__tasks_custom_label_bool
       \tl_set:Nn \l__tasks_custom_label_tl {#1} ,
@@ -828,5 +850,9 @@
 2019/11/03 v1.1   - fix typo
                   - make \settasks' argument long
                   - new option `start'
-2020/01/11 v1.2   - allow `label-format' to end with command that needs an
+2020/01/11 v1.1a  - allow `label-format' to end with command that needs an
                     argument
+2020/03/21 v1.2   - prefer lazy boolean evaluation
+                  - \tasksifmeasuringTF
+                  - new option `counter'
+                  - rename manual files
