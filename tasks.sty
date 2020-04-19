@@ -28,10 +28,10 @@
 \RequirePackage {expl3,xparse,xtemplate}
 \ExplSyntaxOn
 
-\tl_const:Nn \c_tasks_date_tl                 {2020/03/21}
+\tl_const:Nn \c_tasks_date_tl                 {2020/04/19}
 \tl_const:Nn \c_tasks_version_major_number_tl {1}
 \tl_const:Nn \c_tasks_version_minor_number_tl {2}
-\tl_const:Nn \c_tasks_version_subrelease_tl   {}
+\tl_const:Nn \c_tasks_version_subrelease_tl   {a}
 \tl_const:Nx \c_tasks_version_number_tl
   {
     \c_tasks_version_major_number_tl .
@@ -303,8 +303,8 @@
         \vcoffin_set:Nnn \l__tasks_tmpa_coffin
           { \l__tasks_item_width_dim }
           {
-            \__tasks_setup:
-            #2 { #3 \mode_if_horizontal:T { \strut } }
+            \__tasks_setup: #2 {#3}
+            \mode_if_horizontal:T { \strut }
           }
         \__tasks_debug:n
           {
@@ -777,7 +777,10 @@
 \AtBeginDocument
   {
     \@ifpackageloaded {hyperref}
-      { \tl_set:Nn \theHtask { \int_use:N \g__tasks_env_int . \thetask } }
+      {
+        \tl_set:Nn \theHtask
+          { \int_use:N \g__tasks_env_int . \arabic { \l__tasks_counter_tl } }
+      }
       {}
   }
 
