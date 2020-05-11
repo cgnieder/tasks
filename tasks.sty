@@ -675,7 +675,10 @@
   }
 
 % --------------------------------------------------------------------------
-
+% #1: item separator
+% #2: options
+% #3: number of columns
+% #4: environment body
 \cs_new_protected:Npn \tasks_body:nnnn #1#2#3#4
   {
     \int_gincr:N \g__tasks_env_int
@@ -687,11 +690,11 @@
         \vskip-\baselineskip
         \hrule\@height\z@
       }
+    \keys_set:nn {tasks/list} {#2}
     \dim_compare:nNnF { \l__tasks_before_list_skip } = {0pt}
       { \vspace {\l__tasks_before_list_skip} }
     \list {}
       {
-        \keys_set:nn {tasks/list} {#2}
         \dim_set:Nn \leftmargin  {0pt}
         \dim_set:Nn \rightmargin {0pt}
       }
