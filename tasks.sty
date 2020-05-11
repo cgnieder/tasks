@@ -28,10 +28,10 @@
 \RequirePackage {expl3,xparse,xtemplate}
 \ExplSyntaxOn
 
-\tl_const:Nn \c_tasks_date_tl                 {2020/04/19}
+\tl_const:Nn \c_tasks_date_tl                 {2020/05/11}
 \tl_const:Nn \c_tasks_version_major_number_tl {1}
 \tl_const:Nn \c_tasks_version_minor_number_tl {2}
-\tl_const:Nn \c_tasks_version_subrelease_tl   {a}
+\tl_const:Nn \c_tasks_version_subrelease_tl   {b}
 \tl_const:Nx \c_tasks_version_number_tl
   {
     \c_tasks_version_major_number_tl .
@@ -862,3 +862,5 @@
                   - \tasksifmeasuringTF
                   - new option `counter'
                   - rename manual files
+2020/04/19 v1.2a  - only use arabic numbers for \theHtask
+2020/05/11 v1.2b  - options are set to late for `before-skip' -- fixed
