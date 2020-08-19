@@ -11,12 +11,12 @@
 % Copyright 2013--2020 Clemens Niederberger
 % 
 % This work may be distributed and/or modified under the
-% conditions of the LaTeX Project Public License, either version 1.3
+% conditions of the LaTeX Project Public License, either version 1.3c
 % of this license or (at your option) any later version.
 % The latest version of this license is in
 %   http://www.latex-project.org/lppl.txt
-% and version 1.3 or later is part of all distributions of LaTeX
-% version 2005/12/01 or later.
+% and version 1.3c or later is part of all distributions of LaTeX
+% version 2008/05/04 or later.
 % 
 % This work has the LPPL maintenance status `maintained'.
 % 
@@ -28,10 +28,10 @@
 \RequirePackage {expl3,xparse,xtemplate}
 \ExplSyntaxOn
 
-\tl_const:Nn \c_tasks_date_tl                 {2020/05/11}
+\tl_const:Nn \c_tasks_date_tl                 {2020/08/19}
 \tl_const:Nn \c_tasks_version_major_number_tl {1}
-\tl_const:Nn \c_tasks_version_minor_number_tl {2}
-\tl_const:Nn \c_tasks_version_subrelease_tl   {b}
+\tl_const:Nn \c_tasks_version_minor_number_tl {3}
+\tl_const:Nn \c_tasks_version_subrelease_tl   {}
 \tl_const:Nx \c_tasks_version_number_tl
   {
     \c_tasks_version_major_number_tl .
@@ -59,7 +59,7 @@
 \cs_generate_variant:Nn \tl_set:Nn {cV}
 \cs_generate_variant:Nn \hbox_set:Nn {NV}
 \cs_generate_variant:Nn \msg_warning:nnnn {nnV,nnnx}
-\cs_generate_variant:Nn \tl_replace_once:Nnn {Nne}
+\cs_generate_variant:Nn \tl_replace_all:Nnn {Nne}
 
 % --------------------------------------------------------------------------
 \msg_new:nnn {tasks} {width-too-small}
@@ -111,6 +111,7 @@
 \bool_new:N   \l__tasks_item_indent_bool
 \bool_new:N   \l__tasks_label_offset_bool
 \bool_new:N   \l__tasks_custom_label_bool
+\bool_new:N   \l__tasks_custom_ref_bool
 \bool_new:N   \l__tasks_custom_label_format_bool
 \bool_new:N   \l__tasks_custom_after_item_skip_bool
 \bool_new:N   \l__tasks_debug_bool
@@ -121,6 +122,8 @@
 \tl_new:N     \l__tasks_instance_tl
 \tl_new:N     \l__tasks_label_tl
 \tl_new:N     \l__tasks_custom_label_tl
+\tl_new:N     \l__tasks_ref_tl
+\tl_new:N     \l__tasks_custom_ref_tl
 \tl_new:N     \l__tasks_label_format_tl
 \tl_new:N     \l__tasks_custom_label_format_tl
 \tl_new:N     \l__tasks_counter_tl
@@ -442,6 +445,7 @@
 \DeclareTemplateInterface {tasks} {default} {3}
   {
     label           : tokenlist   = \alph*) ,
+    ref             : tokenlist             ,
     indent          : length      = 2.5em   ,
     label-format    : tokenlist             ,
     label-width     : length      = 11pt    ,
@@ -460,6 +464,7 @@
 \DeclareTemplateCode {tasks} {default} {3}
   {
     label           = \l__tasks_label_tl                 ,
+    ref             = \l__tasks_label_ref_tl             ,
     indent          = \l__tasks_item_default_indent_dim  ,
     label-format    = \l__tasks_label_format_tl          ,
     label-width     = \l__tasks_label_default_width_dim  ,
@@ -524,15 +529,23 @@
           { \tl_to_str:V \l__tasks_custom_label_tl }
           { \tl_to_str:V \l__tasks_label_tl }
       }
-    \bool_set_false:N \l__tasks_tmpa_bool
-    \tl_if_in:NnT \l__tasks_tmpa_tl {*}
+    \tl_set:Nx \l__tasks_tmpb_tl
       {
-        \tl_replace_once:Nne \l__tasks_tmpa_tl {*} {{ \l__tasks_counter_tl }}
-        \bool_set_true:N \l__tasks_tmpa_bool
+        \bool_if:NTF \l__tasks_custom_ref_bool
+          { \tl_to_str:V \l__tasks_custom_ref_tl }
+          { \tl_to_str:V \l__tasks_ref_tl }
       }
+    % replace the stars:
+    \tl_replace_all:Nne \l__tasks_tmpa_tl {*} {{ \l__tasks_counter_tl }}
     \tl_set_rescan:NnV \l__tasks_tmpa_tl {} \l__tasks_tmpa_tl
-    \bool_if:NT \l__tasks_tmpa_bool
-      { \tl_set:cV { the \l__tasks_counter_tl } \l__tasks_tmpa_tl }
+    \tl_if_blank:VTF \l__tasks_tmpb_tl
+      { \tl_set_eq:NN \l__tasks_tmpb_tl \l__tasks_tmpa_tl }
+      {
+        \tl_replace_all:Nne \l__tasks_tmpb_tl {*} {{ \l__tasks_counter_tl }}
+        \tl_set_rescan:NnV \l__tasks_tmpb_tl {} \l__tasks_tmpb_tl
+      }
+    % update \thecounter:
+    \tl_set:cV { the \l__tasks_counter_tl } \l__tasks_tmpb_tl
     \dim_compare:nNnT
       { \l__tasks_item_indent_dim }
       <
@@ -547,8 +560,10 @@
     \seq_map_inline:Nn \l__tasks_seq
       {
         \__tasks_read_item:www ##1 \q_stop
+        % TODO
         \refstepcounter { \l__tasks_counter_tl }
         \tl_set:Nx \l__tasks_label_tl { { \exp_not:V \l__tasks_tmpa_tl } }
+        \tl_set:cV {tasklabel} \l__tasks_label_tl
         \bool_if:NTF \l__tasks_custom_label_format_bool
           { \tl_put_left:NV \l__tasks_label_tl \l__tasks_custom_label_format_tl }
           { \tl_put_left:NV \l__tasks_label_tl \l__tasks_label_format_tl }
@@ -649,6 +664,9 @@
     label            .code:n     =
       \bool_set_true:N \l__tasks_custom_label_bool
       \tl_set:Nn \l__tasks_custom_label_tl {#1} ,
+    ref              .code:n     =
+      \bool_set_true:N \l__tasks_custom_ref_bool
+      \tl_set:Nn \l__tasks_custom_ref_tl {#1} ,
     label-format     .code:n     =
       \bool_set_true:N \l__tasks_custom_label_format_bool
       \tl_set:Nn \l__tasks_custom_label_format_tl {#1} ,
@@ -864,3 +882,4 @@
                   - rename manual files
 2020/04/19 v1.2a  - only use arabic numbers for \theHtask
 2020/05/11 v1.2b  - options are set to late for `before-skip' -- fixed
+2020/05/11 v1.3   - add `ref' option

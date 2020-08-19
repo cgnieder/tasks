@@ -11,12 +11,12 @@
 % Copyright 2013--2020 Clemens Niederberger
 % 
 % This work may be distributed and/or modified under the
-% conditions of the LaTeX Project Public License, either version 1.3
+% conditions of the LaTeX Project Public License, either version 1.3c
 % of this license or (at your option) any later version.
 % The latest version of this license is in
 %   http://www.latex-project.org/lppl.txt
-% and version 1.3 or later is part of all distributions of LaTeX
-% version 2005/12/01 or later.
+% and version 1.3c or later is part of all distributions of LaTeX
+% version 2008/05/04 or later.
 % 
 % This work has the LPPL maintenance status `maintained'.
 % 
@@ -235,6 +235,10 @@ following ones that can be set using a setup command:
     \changedversion{1.0}Sets a custom label.  The \code{*} is replaced by
     \Marg{task}.  This is heavily inspired by
     \pkg{enumitem}'s~\cite{pkg:enumitem} \code{label} option.
+  \keyval{ref}{code}\Default
+    \sinceversion{1.3}Works like \option{label} but sets the output of the
+    reference by setting \cs*{the\meta{counter}} (\cs{thetask} in the default
+    setting).
   \keyval{label-width}{dim}\Default{1em}
     Sets the width of the item labels.
   \keyval{label-offset}{dim}\Default{.3333em}
@@ -391,12 +395,38 @@ argument of \cs{task}. This will temporarily overwrite the default label.
   \end{tasks}
 \end{example}
 
+You've already seen examples for the \option{label} option.
+\begin{options}
+  \keyval{label}{code}\Default{\cs*{alph}\code{*)}}
+    It can be used to set the label for a list.  A \code{*} inside is always
+    replaced by the current counter name inside braces.  It can contain
+    formatting instructions like \cs*{bfseries} but it can be cleaner to use
+  \keyval{label-format}{code}\Default
+    instead.  This is especially true since the \option{label} also sets
+    \cs*{the\meta{counter}} where you usually don't want to have formatting
+    instructions.  Another way to deal with this issue is the option
+  \keyval{ref}{code}\Default
+    which sets \cs*{the\meta{counter}} (\cs{thetask} in the default setting).
+\end{options}
+
+\begin{example}[side-by-side]
+  \begin{tasks}[label=\arabic*.,ref=\arabic*]
+    \task first item
+    \task second item \label{foo}
+  \end{tasks}
+  See item~\ref{foo} without dot.
+\end{example}
+
+Two additional commands are defined which in some circumstances might prove
+useful:
 \begin{commands}
   \command{tasksifmeasuringTF}[\marg{true}\marg{false}]
     \sinceversion{1.2}This command used inside a label checks if the label is
     typeset for measuring its width or if it is typeset \enquote{for
-      real}. Might be useful sometimes.  There are also the variants
-    \cs{tasksifmeasuringT} and \cs{tasksifmeasuringF}.
+      real}.  There are also the variants \cs{tasksifmeasuringT} and
+    \cs{tasksifmeasuringF}.
+  \command{tasklabel}
+    \sinceversion{1.3}Holds the current label text.
 \end{commands}
 
 \section{New \code{tasks}-like Environments}
