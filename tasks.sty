@@ -8,7 +8,7 @@
 % Web:    https://github.com/cgnieder/tasks/
 % E-Mail: contact@mychemistry.eu
 % --------------------------------------------------------------------------
-% Copyright 2013--2020 Clemens Niederberger
+% Copyright 2013--2021 Clemens Niederberger
 % 
 % This work may be distributed and/or modified under the
 % conditions of the LaTeX Project Public License, either version 1.3c
@@ -28,10 +28,10 @@
 \RequirePackage {expl3,xparse,xtemplate}
 \ExplSyntaxOn
 
-\tl_const:Nn \c_tasks_date_tl                 {2020/08/19}
+\tl_const:Nn \c_tasks_date_tl                 {2021/02/20}
 \tl_const:Nn \c_tasks_version_major_number_tl {1}
 \tl_const:Nn \c_tasks_version_minor_number_tl {3}
-\tl_const:Nn \c_tasks_version_subrelease_tl   {}
+\tl_const:Nn \c_tasks_version_subrelease_tl   {a}
 \tl_const:Nx \c_tasks_version_number_tl
   {
     \c_tasks_version_major_number_tl .
@@ -53,7 +53,8 @@
 % --------------------------------------------------------------------------
 % variants of kernel functions:
 \cs_generate_variant:Nn \tl_if_eq:nnTF {V}
-\cs_generate_variant:Nn \tl_if_eq:nnT  {V}
+\cs_generate_variant:Nn \tl_if_eq:nnT {V}
+\cs_generate_variant:Nn \tl_if_eq:nnF {V}
 \cs_generate_variant:Nn \coffin_attach:NnnNnnnn {NnnNx}
 \cs_generate_variant:Nn \tl_set_rescan:Nnn {NnV}
 \cs_generate_variant:Nn \tl_set:Nn {cV}
@@ -134,6 +135,12 @@
 \tl_new:N     \l__tasks_label_align_tl
 \tl_new:N     \l__tasks_item_tl
 \tl_new:N     \l__tasks_tmp_label_tl
+
+\cs_set:Nx \__tasks_restore_dollar:
+  { \char_set_catcode:nn {36} { \char_value_catcode:n {36} } }
+\char_set_catcode_alignment:N \$
+\tl_const:Nn \c__tasks_default_label_tl {$tasks$default$label$}
+\__tasks_restore_dollar:
 
 \dim_new:N    \l__tasks_item_indent_dim
 \dim_new:N    \l__tasks_item_default_indent_dim
@@ -454,12 +461,6 @@
     after-item-skip : skip        = 1ex plus 1ex minus 1ex
   }
 
-% in the next three commands we want a really unlikely to occur marker; for
-% this we use $ with unusual catcode in ``$tasks$default$label$'':
-\cs_set:Nx \__tasks_restore_dollar:
-  { \char_set_catcode:nn {36} { \char_value_catcode:n {36} } }
-\char_set_catcode_alignment:N \$
-
 % the `default' template code:
 \DeclareTemplateCode {tasks} {default} {3}
   {
@@ -561,7 +562,8 @@
       {
         \__tasks_read_item:www ##1 \q_stop
         % TODO
-        \refstepcounter { \l__tasks_counter_tl }
+        \tl_if_eq:NNT \l__tasks_tmp_label_tl \c__tasks_default_label_tl
+          { \refstepcounter { \l__tasks_counter_tl } }
         \tl_set:Nx \l__tasks_label_tl { { \exp_not:V \l__tasks_tmpa_tl } }
         \tl_set:cV {tasklabel} \l__tasks_label_tl
         \bool_if:NTF \l__tasks_custom_label_format_bool
@@ -581,7 +583,7 @@
               { \dim_to_decimal:n { \box_wd:N \l__tasks_tmpa_box } }
           }
         \bool_set_false:N \l__tasks_measuring_bool
-        \tl_if_eq:VnTF \l__tasks_tmp_label_tl { $tasks$default$label$ }
+        \tl_if_eq:NNTF \l__tasks_tmp_label_tl \c__tasks_default_label_tl
           {
             \__tasks_task:VVV
               \l__tasks_label_tl
@@ -632,13 +634,13 @@
   {
     \peek_meaning:NTF [ % ]
       { \__tasks_read_item_aux_ii:ww }
-      { \__tasks_read_item_aux_ii:ww [$tasks$default$label$] }
+      { \__tasks_read_item_aux_ii:ww [\c__tasks_default_label_tl] }
   }
   
 \cs_new_protected:Npn \__tasks_read_item_aux_ii:ww [#1]#2 \q_stop
   {
-    \tl_if_eq:nnTF {#1} {$tasks$default$label$}
-      { \tl_set:Nn \l__tasks_tmp_label_tl {#1} }
+    \tl_if_eq:nnTF {#1} {\c__tasks_default_label_tl}
+      { \tl_set:NV \l__tasks_tmp_label_tl \c__tasks_default_label_tl }
       {
         \tl_set:Nn \l__tasks_tmp_label_tl {{#1}}
         \tl_put_left:NV \l__tasks_tmp_label_tl \l__tasks_label_format_tl
@@ -882,4 +884,5 @@
                   - rename manual files
 2020/04/19 v1.2a  - only use arabic numbers for \theHtask
 2020/05/11 v1.2b  - options are set to late for `before-skip' -- fixed
-2020/05/11 v1.3   - add `ref' option
+2020/08/19 v1.3   - add `ref' option
+2021/02/20 v1.3a  - fix issue #23
