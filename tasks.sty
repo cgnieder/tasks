@@ -8,7 +8,7 @@
 % Web:    https://github.com/cgnieder/tasks/
 % E-Mail: contact@mychemistry.eu
 % --------------------------------------------------------------------------
-% Copyright 2013--2021 Clemens Niederberger
+% Copyright 2013--2022 Clemens Niederberger
 % 
 % This work may be distributed and/or modified under the
 % conditions of the LaTeX Project Public License, either version 1.3c
@@ -28,10 +28,10 @@
 \RequirePackage {expl3,xparse,xtemplate}
 \ExplSyntaxOn
 
-\tl_const:Nn \c_tasks_date_tl                 {2021/02/20}
+\tl_const:Nn \c_tasks_date_tl                 {2022/01/08}
 \tl_const:Nn \c_tasks_version_major_number_tl {1}
-\tl_const:Nn \c_tasks_version_minor_number_tl {3}
-\tl_const:Nn \c_tasks_version_subrelease_tl   {a}
+\tl_const:Nn \c_tasks_version_minor_number_tl {4}
+\tl_const:Nn \c_tasks_version_subrelease_tl   {}
 \tl_const:Nx \c_tasks_version_number_tl
   {
     \c_tasks_version_major_number_tl .
@@ -401,8 +401,8 @@
 \cs_new_protected:Npn \__tasks_setup:
   {
     \dim_set:Nn \parskip {0pt}
-    \skip_set:Nn \parfillskip {0pt plus 1fil}
-    \dim_set_eq:NN \parskip \parsep
+    % \skip_set:Nn \parfillskip {0pt plus 1fil}
+    % \dim_set_eq:NN \parskip \parsep
     \dim_set_eq:NN \parindent \listparindent
     \noindent
     \strut
@@ -458,7 +458,7 @@
     label-width     : length      = 11pt    ,
     label-offset    : length      = .3333em ,
     item-format     : tokenlist             ,
-    after-item-skip : skip        = 1ex plus 1ex minus 1ex
+    after-item-skip : skip        = \itemsep
   }
 
 % the `default' template code:
@@ -685,10 +685,13 @@
       \bool_set_true:N \l__tasks_item_indent_bool ,
     column-sep       .dim_set:N  = \l__tasks_column_sep_dim ,
     before-skip      .skip_set:N = \l__tasks_before_list_skip ,
+    before-skip      .initial:n  = \topsep ,
     after-skip       .skip_set:N = \l__tasks_after_list_skip ,
+    after-skip       .initial:n  = \topsep ,
     after-item-skip .code:n     =
       \bool_set_true:N \l__tasks_custom_after_item_skip_bool
       \skip_set:Nn \l__tasks_custom_after_item_skip {#1} ,
+    after-item-skip  .initial:n  = \itemsep ,
     resume           .bool_set:N = \l__tasks_resume_bool ,
     start            .int_set:N  = \l__tasks_start_int ,
     start            .initial:n  = 1
@@ -717,6 +720,10 @@
       {
         \dim_set:Nn \leftmargin  {0pt}
         \dim_set:Nn \rightmargin {0pt}
+        \dim_set:Nn \parsep {0pt}
+        \dim_set:Nn \partopsep {0pt}
+        \dim_set:Nn \topsep {0pt}
+        \dim_set:Nn \itemsep {0pt}
       }
       \item \scan_stop:
       \dim_set:Nn \l__tasks_full_width_dim { \linewidth }
@@ -886,3 +893,4 @@
 2020/05/11 v1.2b  - options are set to late for `before-skip' -- fixed
 2020/08/19 v1.3   - add `ref' option
 2021/02/20 v1.3a  - fix issue #23
+2022/01/08 v1.4   - fix issue #27
