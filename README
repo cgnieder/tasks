@@ -24,7 +24,7 @@ The Current Maintainer of this work is Clemens Niederberger.
 --------------------------------------------------------------------------
 The tasks package consists of the files
  - tasks.sty, tasks.cfg
- - tasks-manual.tex, task-manual.pdf, task-manual.cls
+ - tasks-manual.tex, task-manual.pdf, tasks-manual.cls
  - README
 --------------------------------------------------------------------------
 If you have any ideas, questions, suggestions or bugs to report, please
