@@ -270,5 +270,6 @@
 \tasks@add@version{2020-08-19}{1.3}
 \tasks@add@version{2021-02-20}{1.3a}
 \tasks@add@version{2022-01-08}{1.4}
+\tasks@add@version{2022-01-08}{1.4a}
 
 \endinput

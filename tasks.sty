@@ -31,7 +31,7 @@
 \tl_const:Nn \c_tasks_date_tl                 {2022/01/08}
 \tl_const:Nn \c_tasks_version_major_number_tl {1}
 \tl_const:Nn \c_tasks_version_minor_number_tl {4}
-\tl_const:Nn \c_tasks_version_subrelease_tl   {}
+\tl_const:Nn \c_tasks_version_subrelease_tl   {a}
 \tl_const:Nx \c_tasks_version_number_tl
   {
     \c_tasks_version_major_number_tl .
@@ -715,7 +715,7 @@
       }
     \keys_set:nn {tasks/list} {#2}
     \dim_compare:nNnF { \l__tasks_before_list_skip } = {0pt}
-      { \vspace {\l__tasks_before_list_skip} }
+      { \par\addvspace {\l__tasks_before_list_skip} }
     \list {}
       {
         \dim_set:Nn \leftmargin  {0pt}
@@ -730,7 +730,7 @@
       \tasks_environment:Vnnn \l__tasks_instance_tl {#3} {#1} {#4}
     \endlist
     \dim_compare:nNnF { \l__tasks_after_list_skip } = {0pt}
-      { \vspace {\l__tasks_after_list_skip} }
+      { \addvspace {\l__tasks_after_list_skip} }
   }
 
 % --------------------------------------------------------------------------
@@ -894,3 +894,5 @@
 2020/08/19 v1.3   - add `ref' option
 2021/02/20 v1.3a  - fix issue #23
 2022/01/08 v1.4   - fix issue #27
+2022/01/08 v1.4a  - change \vspace into \addvspace so that consecutive lists don't add
+                    their vertical seps, see https://tex.stackexchange.com/q/222973/
