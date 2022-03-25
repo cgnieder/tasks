@@ -256,7 +256,7 @@
         - \l__tasks_column_sep_dim
         + \l__tasks_columns_int \l__tasks_item_indent_dim
         \bool_if:NT \l__tasks_debug_bool { +\l__tasks_columns_int\fboxrule }
-        \bool_if:NT \l__tasks_debug_bool { +\l__tasks_columns_int\fboxrule }
+        % \bool_if:NT \l__tasks_debug_bool { +\l__tasks_columns_int\fboxrule }
       }
     \dim_compare:nNnT
       { \l_tmpa_dim }
@@ -401,8 +401,6 @@
 \cs_new_protected:Npn \__tasks_setup:
   {
     \dim_set:Nn \parskip {0pt}
-    % \skip_set:Nn \parfillskip {0pt plus 1fil}
-    % \dim_set_eq:NN \parskip \parsep
     \dim_set_eq:NN \parindent \listparindent
     \noindent
     \strut
@@ -673,7 +671,12 @@
       \bool_set_true:N \l__tasks_custom_label_format_bool
       \tl_set:Nn \l__tasks_custom_label_format_tl {#1} ,
     label-width      .code:n     =
-      \dim_set:Nn \l__tasks_label_width_dim {#1}
+      \dim_compare:nNnTF {#1} < {0pt}
+        {
+          % \msg_warning:nnn {tasks} {
+          \dim_set:Nn \l__tasks_label_width_dim { \dim_abs:n {#1} }
+        }
+        { \dim_set:Nn \l__tasks_label_width_dim {#1} }
       \bool_set_true:N \l__tasks_label_width_bool ,
     label-offset     .code:n     =
       \dim_set:Nn \l__tasks_label_offset_dim {#1}
